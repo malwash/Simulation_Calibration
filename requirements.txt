@@ -6,6 +6,6 @@ scikit-learn>=0.24.2
 scipy>=1.6.2
 ipython>=7.27.0
 python-igraph>=0.9.6
-dagsim
-notears
-bnlearn
+git+git://github.com/uio-bmi/dagsim.git@master#dagsim
+git+git://github.com/xunzheng/notears.git@master#notears
+git+git://github.com/erdogant/bnlearn.git@master#bnlearn
