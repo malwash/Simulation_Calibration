@@ -1,0 +1,73 @@
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import roc_curve, roc_auc_score, classification_report, accuracy_score, confusion_matrix
+from sklearn.metrics import r2_score
+from sklearn.model_selection import cross_val_score
+from sklearn import metrics
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn import svm
+from sklearn.neighbors import KNeighborsClassifier
+
+def decision_tree(x_train, y_train, x_test, y_test):
+    clf = DecisionTreeClassifier(random_state=0)
+    clf = clf.fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+    return metrics.accuracy_score(y_test,y_pred)
+
+def random_forest(x_train, y_train, x_test, y_test):
+    rf = RandomForestClassifier(random_state=0)
+    rf = rf.fit(x_train, y_train)
+    y_pred = rf.predict(x_test)
+    return metrics.accuracy_score(y_test,y_pred)
+
+def logistic_regression(x_train, y_train, x_test, y_test):
+    lr = LogisticRegression(random_state=0)
+    lr = lr.fit(x_train, y_train)
+    y_pred = lr.predict(x_test)
+    return metrics.accuracy_score(y_test,y_pred)
+
+def naive_bayes(x_train, y_train, x_test, y_test):
+    gnb = GaussianNB()
+    gnb = gnb.fit(x_train, y_train)
+    y_pred = gnb.predict(x_test)
+    return metrics.accuracy_score(y_test, y_pred)
+
+def support_vector_machines(x_train, y_train, x_test, y_test):
+    clf = svm.SVC()
+    clf = clf.fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+    return metrics.accuracy_score(y_test, y_pred)
+
+def k_nearest_neighbor(x_train, y_train, x_test, y_test):
+    clf = KNeighborsClassifier(n_neighbors=3)
+    clf = clf.fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+    return metrics.accuracy_score(y_test, y_pred)
+
+#def decision_tree():
+#    clf = DecisionTreeClassifier(random_state=0)
+#    clf = clf.fit(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4])
+#    y_pred = clf.predict(x_test)
+#    print("(Double-Simulated) Accuracy of bnlearn on Test set (DecisionTree)", metrics.accuracy_score(y_test,y_pred))
+#
+#    clf = clf.fit(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4])
+#    y_pred = clf.predict(x_test)
+#    print("(Double-Simulated) Accuracy of no_tears on Test set (DecisionTree)", metrics.accuracy_score(y_test,y_pred))
+
+#decision_tree()
+
+#def random_forest():
+#    rf = RandomForestClassifier(random_state=0)
+#    rf = rf.fit(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4])
+#    y_pred = rf.predict(x_test)
+#    print('(Double-Simulated) Accuracy of bn_learn on Test set (RandomForestClassifier):', metrics.accuracy_score(y_test,y_pred), '%.')
+#
+#    rf = rf.fit(no_tears_sample_train.iloc[:, 0:4], no_tears_sample_train.iloc[:, 4])
+#    y_pred = rf.predict(x_test)
+#    print('(Double-Simulated) Accuracy of no_tears on Test set (RandomForestClassifier):', metrics.accuracy_score(y_test,y_pred), '%.')
+
+#random_forest()
