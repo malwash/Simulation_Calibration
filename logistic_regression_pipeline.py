@@ -16,7 +16,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from statistics import mean
 from sklearn.preprocessing import MinMaxScaler
-from baseDS import Graph, Generic
+from dagsim.baseDS import Graph, Generic
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
