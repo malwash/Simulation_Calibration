@@ -80,151 +80,151 @@ def realworld_evaluate(pipeline_type):
     y_pred = clf.predict(x_test)
     if(pipeline_type==1):
         global real_linear_dt_scores
-        real_linear_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_linear_dt_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==2):
         global real_nonlinear_dt_scores
-        real_nonlinear_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_nonlinear_dt_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==3):
         global real_sparse_dt_scores
-        real_sparse_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_sparse_dt_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_dt_scores
-        real_dimension_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_dimension_dt_scores = cross_val_score(clf, x_test, y_test, cv=10)
     clf = DecisionTreeClassifier(criterion='entropy')
     clf = clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_dt_entropy_scores
-        real_linear_dt_entropy_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_linear_dt_entropy_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_dt_entropy_scores
-        real_nonlinear_dt_entropy_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_nonlinear_dt_entropy_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_dt_entropy_scores
-        real_sparse_dt_entropy_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_sparse_dt_entropy_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_dt_entropy_scores
-        real_dimension_dt_entropy_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_dimension_dt_entropy_scores = cross_val_score(clf, x_test, y_test, cv=10)
     rf = RandomForestClassifier(criterion='gini')
     rf = rf.fit(x_train, y_train)
     y_pred = rf.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_rf_scores
-        real_linear_rf_scores = cross_val_score(rf, x_train, y_train, cv=10)
+        real_linear_rf_scores = cross_val_score(rf, x_test, y_test, cv=10)
     elif(pipeline_type==2):
         global real_nonlinear_rf_scores
-        real_nonlinear_rf_scores = cross_val_score(rf, x_train, y_train, cv=10)
+        real_nonlinear_rf_scores = cross_val_score(rf, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_rf_scores
-        real_sparse_rf_scores = cross_val_score(rf, x_train, y_train, cv=10)
+        real_sparse_rf_scores = cross_val_score(rf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_rf_scores
-        real_dimension_rf_scores = cross_val_score(rf, x_train, y_train, cv=10)
+        real_dimension_rf_scores = cross_val_score(rf, x_test, y_test, cv=10)
     rf = RandomForestClassifier(criterion='entropy')
     rf = rf.fit(x_train, y_train)
     y_pred = rf.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_rf_entropy_scores
-        real_linear_rf_entropy_scores = cross_val_score(rf, x_train, y_train, cv=10)
+        real_linear_rf_entropy_scores = cross_val_score(rf, x_test, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_rf_entropy_scores
-        real_nonlinear_rf_entropy_scores = cross_val_score(rf, x_train, y_train, cv=10)
+        real_nonlinear_rf_entropy_scores = cross_val_score(rf, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_rf_entropy_scores
-        real_sparse_rf_entropy_scores = cross_val_score(rf, x_train, y_train, cv=10)
+        real_sparse_rf_entropy_scores = cross_val_score(rf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_rf_entropy_scores
-        real_dimension_rf_entropy_scores = cross_val_score(rf, x_train, y_train, cv=10)
+        real_dimension_rf_entropy_scores = cross_val_score(rf, x_test, y_test, cv=10)
     lr = LogisticRegression(penalty='none')
     lr = lr.fit(x_train, y_train)
     y_pred = lr.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_lr_scores
-        real_linear_lr_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_linear_lr_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif(pipeline_type==2):
         global real_nonlinear_lr_scores
-        real_nonlinear_lr_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_nonlinear_lr_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_lr_scores
-        real_sparse_lr_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_sparse_lr_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_lr_scores
-        real_dimension_lr_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_dimension_lr_scores = cross_val_score(lr, x_test, y_test, cv=10)
     lr = LogisticRegression(penalty='l1', solver='liblinear', l1_ratio=1)
     lr = lr.fit(x_train, y_train)
     y_pred = lr.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_lr_l1_scores
-        real_linear_lr_l1_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_linear_lr_l1_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_lr_l1_scores
-        real_nonlinear_lr_l1_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_nonlinear_lr_l1_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_lr_l1_scores
-        real_sparse_lr_l1_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_sparse_lr_l1_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_lr_l1_scores
-        real_dimension_lr_l1_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_dimension_lr_l1_scores = cross_val_score(lr, x_test, y_test, cv=10)
     lr = LogisticRegression(penalty='l2')
     lr = lr.fit(x_train, y_train)
     y_pred = lr.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_lr_l2_scores
-        real_linear_lr_l2_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_linear_lr_l2_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_lr_l2_scores
-        real_nonlinear_lr_l2_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_nonlinear_lr_l2_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_lr_l2_scores
-        real_sparse_lr_l2_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_sparse_lr_l2_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_lr_l2_scores
-        real_dimension_lr_l2_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_dimension_lr_l2_scores = cross_val_score(lr, x_test, y_test, cv=10)
     lr = LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5)
     lr = lr.fit(x_train, y_train)
     y_pred = lr.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_lr_elastic_scores
-        real_linear_lr_elastic_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_linear_lr_elastic_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_lr_elastic_scores
-        real_nonlinear_lr_elastic_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_nonlinear_lr_elastic_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_lr_elastic_scores
-        real_sparse_lr_elastic_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_sparse_lr_elastic_scores = cross_val_score(lr, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_lr_elastic_scores
-        real_dimension_lr_elastic_scores = cross_val_score(lr, x_train, y_train, cv=10)
+        real_dimension_lr_elastic_scores = cross_val_score(lr, x_test, y_test, cv=10)
     gnb = BernoulliNB()
     gnb = gnb.fit(x_train, y_train)
     y_pred = gnb.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_gb_scores
-        real_linear_gb_scores = cross_val_score(gnb, x_train, y_train, cv=10)
+        real_linear_gb_scores = cross_val_score(gnb, x_test, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_gb_scores
-        real_nonlinear_gb_scores = cross_val_score(gnb, x_train, y_train, cv=10)
+        real_nonlinear_gb_scores = cross_val_score(gnb, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_gb_scores
-        real_sparse_gb_scores = cross_val_score(gnb, x_train, y_train, cv=10)
+        real_sparse_gb_scores = cross_val_score(gnb, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_gb_scores
-        real_dimension_gb_scores = cross_val_score(gnb, x_train, y_train, cv=10)
+        real_dimension_gb_scores = cross_val_score(gnb, x_test, y_test, cv=10)
     gnb = GaussianNB()
     gnb = gnb.fit(x_train, y_train)
     y_pred = gnb.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_gb_gaussian_scores
-        real_linear_gb_gaussian_scores = cross_val_score(gnb, x_train, y_train, cv=10)
+        real_linear_gb_gaussian_scores = cross_val_score(gnb, x_test, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_gb_gaussian_scores
-        real_nonlinear_gb_gaussian_scores = cross_val_score(gnb, x_train, y_train, cv=10)
+        real_nonlinear_gb_gaussian_scores = cross_val_score(gnb, x_test, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_gb_gaussian_scores
-        real_sparse_gb_gaussian_scores = cross_val_score(gnb, x_train, y_train, cv=10)
+        real_sparse_gb_gaussian_scores = cross_val_score(gnb, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_gb_gaussian_scores
-        real_dimension_gb_gaussian_scores = cross_val_score(gnb, x_train, y_train, cv=10)
+        real_dimension_gb_gaussian_scores = cross_val_score(gnb, x_test, y_test, cv=10)
     min_max_scaler = MinMaxScaler()
     X_train_minmax = min_max_scaler.fit_transform(x_train)
     X_test_minmax = min_max_scaler.transform(x_test)
@@ -233,16 +233,16 @@ def realworld_evaluate(pipeline_type):
     y_pred = gnb.predict(X_test_minmax)
     if (pipeline_type == 1):
         global real_linear_gb_multi_scores
-        real_linear_gb_multi_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
+        real_linear_gb_multi_scores = cross_val_score(gnb, X_test_minmax, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_gb_multi_scores
-        real_nonlinear_gb_multi_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
+        real_nonlinear_gb_multi_scores = cross_val_score(gnb, X_test_minmax, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_gb_multi_scores
-        real_sparse_gb_multi_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
+        real_sparse_gb_multi_scores = cross_val_score(gnb, X_test_minmax, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_gb_multi_scores
-        real_dimension_gb_multi_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
+        real_dimension_gb_multi_scores = cross_val_score(gnb, X_test_minmax, y_test, cv=10)
     min_max_scaler = MinMaxScaler()
     X_train_minmax = min_max_scaler.fit_transform(x_train)
     X_test_minmax = min_max_scaler.transform(x_test)
@@ -251,31 +251,31 @@ def realworld_evaluate(pipeline_type):
     y_pred = gnb.predict(X_test_minmax)
     if (pipeline_type == 1):
         global real_linear_gb_complement_scores
-        real_linear_gb_complement_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
+        real_linear_gb_complement_scores = cross_val_score(gnb, X_test_minmax, y_test, cv=10)
     elif (pipeline_type == 2):
         global real_nonlinear_gb_complement_scores
-        real_nonlinear_gb_complement_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
+        real_nonlinear_gb_complement_scores = cross_val_score(gnb, X_test_minmax, y_test, cv=10)
     elif (pipeline_type == 3):
         global real_sparse_gb_complement_scores
-        real_sparse_gb_complement_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
+        real_sparse_gb_complement_scores = cross_val_score(gnb, X_test_minmax, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_gb_complement_scores
-        real_dimension_gb_complement_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
+        real_dimension_gb_complement_scores = cross_val_score(gnb, X_test_minmax, y_test, cv=10)
     clf = svm.SVC(kernel="sigmoid")
     clf = clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_svm_scores
-        real_linear_svm_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_linear_svm_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==2):
         global real_nonlinear_svm_scores
-        real_nonlinear_svm_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_nonlinear_svm_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==3):
         global real_sparse_svm_scores
-        real_sparse_svm_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_sparse_svm_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_svm_scores
-        real_dimension_svm_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_dimension_svm_scores = cross_val_score(clf, x_test, y_test, cv=10)
     #clf = svm.SVC(kernel="linear")
     #clf = clf.fit(x_train, y_train)
     #y_pred = clf.predict(x_test)
@@ -296,31 +296,31 @@ def realworld_evaluate(pipeline_type):
     y_pred = clf.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_svm_poly_scores
-        real_linear_svm_poly_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_linear_svm_poly_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==2):
         global real_nonlinear_svm_poly_scores
-        real_nonlinear_svm_poly_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_nonlinear_svm_poly_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==3):
         global real_sparse_svm_poly_scores
-        real_sparse_svm_poly_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_sparse_svm_poly_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_svm_poly_scores
-        real_dimension_svm_poly_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_dimension_svm_poly_scores = cross_val_score(clf, x_test, y_test, cv=10)
     clf = svm.SVC(kernel="rbf")
     clf = clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_svm_rbf_scores
-        real_linear_svm_rbf_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_linear_svm_rbf_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==2):
         global real_nonlinear_svm_rbf_scores
-        real_nonlinear_svm_rbf_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_nonlinear_svm_rbf_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==3):
         global real_sparse_svm_rbf_scores
-        real_sparse_svm_rbf_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_sparse_svm_rbf_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_svm_rbf_scores
-        real_dimension_svm_rbf_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_dimension_svm_rbf_scores = cross_val_score(clf, x_test, y_test, cv=10)
 #    clf = svm.SVC(kernel="precomputed")
 #    clf = clf.fit(x_train, y_train)
 #    y_pred = clf.predict(x_test)
@@ -341,31 +341,31 @@ def realworld_evaluate(pipeline_type):
     y_pred = clf.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_knn_scores
-        real_linear_knn_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_linear_knn_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==2):
         global real_nonlinear_knn_scores
-        real_nonlinear_knn_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_nonlinear_knn_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==3):
         global real_sparse_knn_scores
-        real_sparse_knn_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_sparse_knn_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_knn_scores
-        real_dimension_knn_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_dimension_knn_scores = cross_val_score(clf, x_test, y_test, cv=10)
     clf = KNeighborsClassifier(weights='distance')
     clf = clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     if (pipeline_type == 1):
         global real_linear_knn_distance_scores
-        real_linear_knn_distance_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_linear_knn_distance_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==2):
         global real_nonlinear_knn_distance_scores
-        real_nonlinear_knn_distance_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_nonlinear_knn_distance_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif(pipeline_type==3):
         global real_sparse_knn_distance_scores
-        real_sparse_knn_distance_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_sparse_knn_distance_scores = cross_val_score(clf, x_test, y_test, cv=10)
     elif (pipeline_type == 4):
         global real_dimension_knn_distance_scores
-        real_dimension_knn_distance_scores = cross_val_score(clf, x_train, y_train, cv=10)
+        real_dimension_knn_distance_scores = cross_val_score(clf, x_test, y_test, cv=10)
 
 print("This is the first occurance of the real-world benchmarks")
 realworld_evaluate(pipeline_type)
@@ -446,6 +446,9 @@ def run_learned_workflows(x_train, y_train, pipeline_type, alg):
 #notears simulation scoring
 notears_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
 
+pipeline_type = 2
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+import_real_world_csv(pipeline_type)
 simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
 import_simulated_csv()
 
