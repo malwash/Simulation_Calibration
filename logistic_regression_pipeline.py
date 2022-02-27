@@ -38,41 +38,6 @@ global nonlinear_training
 global sparse_training
 global dimensional_training
 
-# Attampt at globalising the training set of all pipelines from real world
-# pipeline_type = 1
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#pipeline_type = 2
-#nonlinear_training = simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#pipeline_type = 3
-#sparse_training = simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#pipeline_type = 4
-#dimensional_training = simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-
-# import the saved training and test data from DagSim's real world
-# def import_real_world_csv(pipeline_type):
-#     global train_data
-#     train_data = pd.read_csv("train.csv")
-#     global train_data_numpy
-#     train_data_numpy = train_data.to_numpy()
-#     global x_train
-#     global y_train
-#     if(pipeline_type==4):
-#         x_train = train_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])  # num predictors
-#         y_train = train_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()  # outcome
-#     elif(pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
-#         x_train = train_data.iloc[:, 0:4].to_numpy().reshape([-1, 4])  # num predictors
-#         y_train = train_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()  # outcome
-#
-#     global test_data
-#     global x_test
-#     global y_test
-#     test_data = pd.read_csv("test.csv")
-#     if(pipeline_type==4):
-#         x_test = test_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])
-#         y_test = test_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()
-#     elif(pipeline_type==1 or pipeline_type==2 or pipeline_type==3 ):
-#         x_test = test_data.iloc[:, 0:4].to_numpy().reshape([-1, 4])
-#         y_test = test_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()
 
 def slice_data(pipeline_type, train_data, test_data):
     if(pipeline_type==4):
@@ -86,6 +51,7 @@ def slice_data(pipeline_type, train_data, test_data):
         x_test = test_data.iloc[:, 0:4].to_numpy().reshape([-1, 10])  # num predictors
         y_test = test_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()  # outcome
     return x_train, y_train, x_test, y_test
+
 
 def get_data_from_real_world(pipeline_type, num_train, num_test, world=None, data=None):
     '''
@@ -109,10 +75,6 @@ def get_data_from_real_world(pipeline_type, num_train, num_test, world=None, dat
     x_train, y_train, x_test, y_test = slice_data(pipeline_type, train, test)
     return x_train, y_train, x_test, y_test
 
-# def learn_world(pkg_name, train_data, config):
-#     if pkg_name=="notears":
-#         learned_model = notears_linear(train_data[0:100], lambda1=0.01, loss_type=config)
-#     return learned_model
 
 def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test, pipeline_type):
     # module = importlib.import_module(pkg_name)
@@ -126,7 +88,8 @@ def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test
     x_train, y_train, x_test, y_test = slice_data(pipeline_type, learned_data_train, learned_data_test)
     return x_train, y_train, x_test, y_test
 
-# Evaluate function for all ML techniques in the real-world
+
+# Evaluate function for all ML algorithms
 def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
     scores = {}
     pipeline_name = ["linear", "non-linear", "sparse", "dimension"][pipeline_type]
@@ -152,100 +115,16 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
         clf = clf.fit(x_train_rdy, y_train)
         scores[f'{world}_{pipeline_name}_{key}'] = cross_val_score(clf, x_test_rdy, y_test, cv=10)
     return scores
-# Decision Tree
-#     clf = DecisionTreeClassifier(criterion='gini')
-#     clf = clf.fit(x_train, y_train)
-#     y_pred = clf.predict(x_test)
-#     if(pipeline_type==1):
-#         global real_linear_dt_scores
-#         real_linear_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
-#     elif(pipeline_type==2):
-#         global real_nonlinear_dt_scores
-#         real_nonlinear_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
-#     elif(pipeline_type==3):
-#         global real_sparse_dt_scores
-#         real_sparse_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
-#     elif (pipeline_type == 4):
-#         global real_dimension_dt_scores
-#         real_dimension_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
 
-
-
-print("This is the first occurance of the real-world benchmarks")
 
 def evaluate_real(num_train, num_test):
+    results = {}
     for pipeline_type in range(1,5):
         x_train, y_train, x_test, y_test = get_data_from_real_world(pipeline_type, num_train, num_test)
-        world_evaluate("real", pipeline_type, x_train, y_train, x_test, y_test)
+        scores = world_evaluate("real", pipeline_type, x_train, y_train, x_test, y_test)
+        results.update(scores)
+    return results
 
-# pipeline_type = 2
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#
-# realworld_evaluate(pipeline_type)
-
-# import_real_world_csv(pipeline_type)
-#
-# # Simulation library structure learning section
-#
-# print("This is the first occurance of the simulated benchmarks")
-# simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
-
-#simulation_notears.notears_nonlinear_setup(train_data_numpy[0:100], 10000, 5000)
-
-# import the saved training and test data from the simulation framework's learned world
-def import_simulated_csv():
-    global no_tears_sample_train
-    no_tears_sample_train= pd.read_csv('W_est_train.csv')
-    #global no_tears_sample_test
-    #no_tears_sample_test = pd.read_csv('W_est_test.csv')
-    #global no_tears_nonlinear_sample_train
-    #no_tears_nonlinear_sample_train = pd.read_csv('K_est_train.csv')
-    #global no_tears_nonlinear_sample_test
-    #no_tears_nonlinear_sample_test = pd.read_csv('K_est_test.csv')
-    global bn_learn_sample_train
-    bn_learn_sample_train = pd.read_csv('Z_est_train.csv')
-    #global bn_learn_sample_test
-    #bn_learn_sample_test = pd.read_csv('Z_est_test.csv')
-
-import_simulated_csv()
-
-def run_learned_workflows(x_train, y_train, pipeline_type, alg):
-    print("alg:"+alg+", pipeline:"+str(pipeline_type))
-    my_dict = {"alg": alg, "pl": pipeline_type, "dt": 0, "dt_e": 0, "rf": 0, "rf_E": 0,"lr": 0, "lr_l1": 0, "lr_l2": 0, "lr_e": 0, "nb": 0, "nb_g": 0,"nb_m": 0,"nb_c": 0,"svm": 0,"svm_l": 0,"svm_po": 0,"svm_r": 0,"svm_pr": 0, "knn": 0, "knn_d": 0}
-    my_dict["dt"] = simulation_models.decision_tree(x_train, y_train, x_test, y_test)
-    my_dict["dt_e"] = simulation_models.decision_tree_entropy(x_train, y_train, x_test, y_test)
-    my_dict["rf"] = simulation_models.random_forest(x_train, y_train, x_test, y_test)
-    my_dict["rf_e"] = simulation_models.random_forest_entropy(x_train, y_train, x_test, y_test)
-    my_dict["lr"] = simulation_models.logistic_regression(x_train, y_train, x_test, y_test)
-    my_dict["lr_l1"] = simulation_models.logistic_regression_l1(x_train, y_train, x_test, y_test)
-    my_dict["lr_l2"] = simulation_models.logistic_regression_l2(x_train, y_train, x_test, y_test)
-    my_dict["lr_e"] = simulation_models.logistic_regression_elastic(x_train, y_train, x_test, y_test)
-    my_dict["nb"] = simulation_models.naive_bayes(x_train, y_train, x_test, y_test)
-    my_dict["nb_g"] = simulation_models.naive_bayes_gaussian(x_train, y_train, x_test, y_test)
-    my_dict["nb_m"] = simulation_models.naive_bayes_multinomial(x_train, y_train, x_test, y_test)
-    my_dict["nb_c"] = simulation_models.naive_bayes_complement(x_train, y_train, x_test, y_test)
-    my_dict["svm"] = simulation_models.support_vector_machines(x_train, y_train, x_test, y_test)
-    #my_dict["svm_l"] = simulation_models.support_vector_machines_linear(x_train, y_train, x_test, y_test)
-    my_dict["svm_po"] = simulation_models.support_vector_machines_poly(x_train, y_train, x_test, y_test)
-    my_dict["svm_r"] = simulation_models.support_vector_machines_rbf(x_train, y_train, x_test, y_test)
-    #my_dict["svm_pr"] = simulation_models.support_vector_machines_precomputed(x_train, y_train, x_test, y_test)
-    my_dict["knn"] = simulation_models.k_nearest_neighbor(x_train, y_train, x_test, y_test)
-    my_dict["knn_d"] = simulation_models.k_nearest_neighbor_distance(x_train, y_train, x_test, y_test)
-    return my_dict
-
-#helper function to execute one workflow with parameterised setup
-#def execute_pipeline(x_train, y_train, run_pipeline_type, pipeline_title):
-#    pipeline_type = 2
-#    simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#    import_real_world_csv(pipeline_type)
-
-#notears simulation scoring
-# notears_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
-#
-# simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
 
 def evaluate_on_learned_world(num_train_rl, num_train_lr, num_test_lr):
     world = "notears"
@@ -260,82 +139,7 @@ def evaluate_on_learned_world(num_train_rl, num_train_lr, num_test_lr):
             results.update(scores)
     return results
 
-# pipeline_type = 3
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
-# pipeline_type = 4
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (Logistic)")
-#
-# #notears hyperparameter loss function l2
-# pipeline_type = 1
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-# notears_l2_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
-#
-# pipeline_type = 2
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_l2_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
-# pipeline_type = 3
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_l2_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
-# pipeline_type = 4
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_l2_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (L2)")
-#
-# #notears hyperparameter loss function poisson
-# pipeline_type = 1
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-# notears_poisson_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
-#
-# pipeline_type = 2
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_poisson_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
-# pipeline_type = 3
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_poisson_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
-# pipeline_type = 4
-# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-# import_real_world_csv(pipeline_type)
-# simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-# import_simulated_csv()
-#
-# notears_poisson_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (Poisson)")
 
-#bnlearn simulation scoring
 pipeline_type = 1
 simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 import_real_world_csv(pipeline_type)
