@@ -3,6 +3,7 @@ import random
 #1 - compact dictionary into a dict or dict 414-436 homer simpson
 #2 - Change csv simulated dataset to return for the function, change w_est, inside simulation_bnlearn, simulation_notears return instead of np.savetxt
 #3 - Compact a single execution of a pipeline into a class 445-764
+import importlib
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -16,7 +17,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from statistics import mean
 from sklearn.preprocessing import MinMaxScaler
-from dagsim.baseDS import Graph, Generic
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,6 +27,9 @@ import simulation_dagsim
 import simulation_models
 from sklearn import metrics
 from sklearn import svm
+from notears import utils
+from notears.linear import notears_linear
+from notears.nonlinear import notears_nonlinear, NotearsMLP
 
 #Save linear, nonlinear, sparse, dimensional training set of the real-world for reproducablity
 global pipeline_type
@@ -36,8 +39,8 @@ global sparse_training
 global dimensional_training
 
 # Attampt at globalising the training set of all pipelines from real world
-pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# pipeline_type = 1
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 #pipeline_type = 2
 #nonlinear_training = simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
 #pipeline_type = 3
@@ -46,353 +49,146 @@ simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 #dimensional_training = simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
 
 # import the saved training and test data from DagSim's real world
-def import_real_world_csv(pipeline_type):
-    global train_data
-    train_data = pd.read_csv("train.csv")
-    global train_data_numpy
-    train_data_numpy = train_data.to_numpy()
-    global x_train
-    global y_train
+# def import_real_world_csv(pipeline_type):
+#     global train_data
+#     train_data = pd.read_csv("train.csv")
+#     global train_data_numpy
+#     train_data_numpy = train_data.to_numpy()
+#     global x_train
+#     global y_train
+#     if(pipeline_type==4):
+#         x_train = train_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])  # num predictors
+#         y_train = train_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()  # outcome
+#     elif(pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+#         x_train = train_data.iloc[:, 0:4].to_numpy().reshape([-1, 4])  # num predictors
+#         y_train = train_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()  # outcome
+#
+#     global test_data
+#     global x_test
+#     global y_test
+#     test_data = pd.read_csv("test.csv")
+#     if(pipeline_type==4):
+#         x_test = test_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])
+#         y_test = test_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()
+#     elif(pipeline_type==1 or pipeline_type==2 or pipeline_type==3 ):
+#         x_test = test_data.iloc[:, 0:4].to_numpy().reshape([-1, 4])
+#         y_test = test_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()
+
+def slice_data(pipeline_type, train_data, test_data):
     if(pipeline_type==4):
         x_train = train_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])  # num predictors
         y_train = train_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()  # outcome
-    elif(pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+        x_test = test_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])  # num predictors
+        y_test = test_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()  # outcome
+    else:
         x_train = train_data.iloc[:, 0:4].to_numpy().reshape([-1, 4])  # num predictors
         y_train = train_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()  # outcome
+        x_test = test_data.iloc[:, 0:4].to_numpy().reshape([-1, 10])  # num predictors
+        y_test = test_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()  # outcome
+    return x_train, y_train, x_test, y_test
 
-    global test_data
-    global x_test
-    global y_test
-    test_data = pd.read_csv("test.csv")
-    if(pipeline_type==4):
-        x_test = test_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])
-        y_test = test_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()
-    elif(pipeline_type==1 or pipeline_type==2 or pipeline_type==3 ):
-        x_test = test_data.iloc[:, 0:4].to_numpy().reshape([-1, 4])
-        y_test = test_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()
+def get_data_from_real_world(pipeline_type, num_train, num_test, world=None, data=None):
+    '''
+    Simulate data using dagsim based on the pipeline type
+    :param pipeline_type: (str)
+    :return: sliced train and test data
+    '''
+    # if data is None:
+    #     if world!="real":
+    #             raise("For learning a world, data are needed")
+    #     else:
+    #         train, test = simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+    # else:
+    #     if world=="real":
+    #         raise("world==real with data are not allowed")
+    #     elif world=="notears":
+    #         train, test = simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+    #     elif world=="bnlearn":
+    #         train, test = simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+    train, test = simulation_dagsim.setup_realworld(pipeline_type, num_train, num_test)
+    x_train, y_train, x_test, y_test = slice_data(pipeline_type, train, test)
+    return x_train, y_train, x_test, y_test
+
+# def learn_world(pkg_name, train_data, config):
+#     if pkg_name=="notears":
+#         learned_model = notears_linear(train_data[0:100], lambda1=0.01, loss_type=config)
+#     return learned_model
+
+def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test, pipeline_type):
+    # module = importlib.import_module(pkg_name)
+    # function = getattr(module, f'{pkg_name}_setup_{config}')
+    learned_data_train = None
+    learned_data_test = None
+    if pkg_name=="notears":
+        model = notears_linear(real_data[0:100], lambda1=0.01, loss_type=config)
+        learned_data_train = utils.simulate_linear_sem(model, num_train, 'logistic')
+        learned_data_test = utils.simulate_linear_sem(model, num_test, 'logistic')
+    x_train, y_train, x_test, y_test = slice_data(pipeline_type, learned_data_train, learned_data_test)
+    return x_train, y_train, x_test, y_test
 
 # Evaluate function for all ML techniques in the real-world
-def realworld_evaluate(pipeline_type):
-    import_real_world_csv(pipeline_type)
-    #Decision Tree
-    clf = DecisionTreeClassifier(criterion='gini')
-    clf = clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-    if(pipeline_type==1):
-        global real_linear_dt_scores
-        real_linear_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==2):
-        global real_nonlinear_dt_scores
-        real_nonlinear_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==3):
-        global real_sparse_dt_scores
-        real_sparse_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_dt_scores
-        real_dimension_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    clf = DecisionTreeClassifier(criterion='entropy')
-    clf = clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_dt_entropy_scores
-        real_linear_dt_entropy_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_dt_entropy_scores
-        real_nonlinear_dt_entropy_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_dt_entropy_scores
-        real_sparse_dt_entropy_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_dt_entropy_scores
-        real_dimension_dt_entropy_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    rf = RandomForestClassifier(criterion='gini')
-    rf = rf.fit(x_train, y_train)
-    y_pred = rf.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_rf_scores
-        real_linear_rf_scores = cross_val_score(rf, x_train, y_train, cv=10)
-    elif(pipeline_type==2):
-        global real_nonlinear_rf_scores
-        real_nonlinear_rf_scores = cross_val_score(rf, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_rf_scores
-        real_sparse_rf_scores = cross_val_score(rf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_rf_scores
-        real_dimension_rf_scores = cross_val_score(rf, x_train, y_train, cv=10)
-    rf = RandomForestClassifier(criterion='entropy')
-    rf = rf.fit(x_train, y_train)
-    y_pred = rf.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_rf_entropy_scores
-        real_linear_rf_entropy_scores = cross_val_score(rf, x_train, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_rf_entropy_scores
-        real_nonlinear_rf_entropy_scores = cross_val_score(rf, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_rf_entropy_scores
-        real_sparse_rf_entropy_scores = cross_val_score(rf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_rf_entropy_scores
-        real_dimension_rf_entropy_scores = cross_val_score(rf, x_train, y_train, cv=10)
-    lr = LogisticRegression(penalty='none')
-    lr = lr.fit(x_train, y_train)
-    y_pred = lr.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_lr_scores
-        real_linear_lr_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif(pipeline_type==2):
-        global real_nonlinear_lr_scores
-        real_nonlinear_lr_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_lr_scores
-        real_sparse_lr_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_lr_scores
-        real_dimension_lr_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    lr = LogisticRegression(penalty='l1', solver='liblinear', l1_ratio=1)
-    lr = lr.fit(x_train, y_train)
-    y_pred = lr.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_lr_l1_scores
-        real_linear_lr_l1_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_lr_l1_scores
-        real_nonlinear_lr_l1_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_lr_l1_scores
-        real_sparse_lr_l1_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_lr_l1_scores
-        real_dimension_lr_l1_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    lr = LogisticRegression(penalty='l2')
-    lr = lr.fit(x_train, y_train)
-    y_pred = lr.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_lr_l2_scores
-        real_linear_lr_l2_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_lr_l2_scores
-        real_nonlinear_lr_l2_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_lr_l2_scores
-        real_sparse_lr_l2_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_lr_l2_scores
-        real_dimension_lr_l2_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    lr = LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5)
-    lr = lr.fit(x_train, y_train)
-    y_pred = lr.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_lr_elastic_scores
-        real_linear_lr_elastic_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_lr_elastic_scores
-        real_nonlinear_lr_elastic_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_lr_elastic_scores
-        real_sparse_lr_elastic_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_lr_elastic_scores
-        real_dimension_lr_elastic_scores = cross_val_score(lr, x_train, y_train, cv=10)
-    gnb = BernoulliNB()
-    gnb = gnb.fit(x_train, y_train)
-    y_pred = gnb.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_gb_scores
-        real_linear_gb_scores = cross_val_score(gnb, x_train, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_gb_scores
-        real_nonlinear_gb_scores = cross_val_score(gnb, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_gb_scores
-        real_sparse_gb_scores = cross_val_score(gnb, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_gb_scores
-        real_dimension_gb_scores = cross_val_score(gnb, x_train, y_train, cv=10)
-    gnb = GaussianNB()
-    gnb = gnb.fit(x_train, y_train)
-    y_pred = gnb.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_gb_gaussian_scores
-        real_linear_gb_gaussian_scores = cross_val_score(gnb, x_train, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_gb_gaussian_scores
-        real_nonlinear_gb_gaussian_scores = cross_val_score(gnb, x_train, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_gb_gaussian_scores
-        real_sparse_gb_gaussian_scores = cross_val_score(gnb, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_gb_gaussian_scores
-        real_dimension_gb_gaussian_scores = cross_val_score(gnb, x_train, y_train, cv=10)
-    min_max_scaler = MinMaxScaler()
-    X_train_minmax = min_max_scaler.fit_transform(x_train)
-    X_test_minmax = min_max_scaler.transform(x_test)
-    gnb = MultinomialNB()
-    gnb = gnb.fit(X_train_minmax, y_train)
-    y_pred = gnb.predict(X_test_minmax)
-    if (pipeline_type == 1):
-        global real_linear_gb_multi_scores
-        real_linear_gb_multi_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_gb_multi_scores
-        real_nonlinear_gb_multi_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_gb_multi_scores
-        real_sparse_gb_multi_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_gb_multi_scores
-        real_dimension_gb_multi_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
-    min_max_scaler = MinMaxScaler()
-    X_train_minmax = min_max_scaler.fit_transform(x_train)
-    X_test_minmax = min_max_scaler.transform(x_test)
-    gnb = ComplementNB()
-    gnb = gnb.fit(X_train_minmax, y_train)
-    y_pred = gnb.predict(X_test_minmax)
-    if (pipeline_type == 1):
-        global real_linear_gb_complement_scores
-        real_linear_gb_complement_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
-    elif (pipeline_type == 2):
-        global real_nonlinear_gb_complement_scores
-        real_nonlinear_gb_complement_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
-    elif (pipeline_type == 3):
-        global real_sparse_gb_complement_scores
-        real_sparse_gb_complement_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_gb_complement_scores
-        real_dimension_gb_complement_scores = cross_val_score(gnb, X_train_minmax, y_train, cv=10)
-    clf = svm.SVC(kernel="sigmoid")
-    clf = clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_svm_scores
-        real_linear_svm_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==2):
-        global real_nonlinear_svm_scores
-        real_nonlinear_svm_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==3):
-        global real_sparse_svm_scores
-        real_sparse_svm_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_svm_scores
-        real_dimension_svm_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    #clf = svm.SVC(kernel="linear")
-    #clf = clf.fit(x_train, y_train)
-    #y_pred = clf.predict(x_test)
-    #if (pipeline_type == 1):
-    #    global real_linear_svm_linear_scores
-    #    real_linear_svm_linear_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    #elif(pipeline_type==2):
-    #    global real_nonlinear_svm_linear_scores
-    #    real_nonlinear_svm_linear_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    #elif(pipeline_type==3):
-    #    global real_sparse_svm_linear_scores
-    #    real_sparse_svm_linear_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    #elif (pipeline_type == 4):
-    #    global real_dimension_svm_linear_scores
-    #    real_dimension_svm_linear_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    clf = svm.SVC(kernel="poly")
-    clf = clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_svm_poly_scores
-        real_linear_svm_poly_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==2):
-        global real_nonlinear_svm_poly_scores
-        real_nonlinear_svm_poly_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==3):
-        global real_sparse_svm_poly_scores
-        real_sparse_svm_poly_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_svm_poly_scores
-        real_dimension_svm_poly_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    clf = svm.SVC(kernel="rbf")
-    clf = clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_svm_rbf_scores
-        real_linear_svm_rbf_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==2):
-        global real_nonlinear_svm_rbf_scores
-        real_nonlinear_svm_rbf_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==3):
-        global real_sparse_svm_rbf_scores
-        real_sparse_svm_rbf_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_svm_rbf_scores
-        real_dimension_svm_rbf_scores = cross_val_score(clf, x_train, y_train, cv=10)
-#    clf = svm.SVC(kernel="precomputed")
-#    clf = clf.fit(x_train, y_train)
-#    y_pred = clf.predict(x_test)
-#    if (pipeline_type == 1):
-#        global real_linear_svm_precomputed_scores
-#        real_linear_svm_precomputed_scores = cross_val_score(clf, x_train, y_train, cv=10)
-#    elif(pipeline_type==2):
-#        global real_nonlinear_svm_precomputed_scores
-#        real_nonlinear_svm_precomputed_scores = cross_val_score(clf, x_train, y_train, cv=10)
-#    elif(pipeline_type==3):
-#        global real_sparse_svm_precomputed_scores
-#        real_sparse_svm_precomputed_scores = cross_val_score(clf, x_train, y_train, cv=10)
-#    elif (pipeline_type == 4):
-#        global real_dimension_svm_precomputed_scores
-#        real_dimension_svm_precomputed_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    clf = KNeighborsClassifier(weights='uniform')
-    clf = clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_knn_scores
-        real_linear_knn_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==2):
-        global real_nonlinear_knn_scores
-        real_nonlinear_knn_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==3):
-        global real_sparse_knn_scores
-        real_sparse_knn_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_knn_scores
-        real_dimension_knn_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    clf = KNeighborsClassifier(weights='distance')
-    clf = clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-    if (pipeline_type == 1):
-        global real_linear_knn_distance_scores
-        real_linear_knn_distance_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==2):
-        global real_nonlinear_knn_distance_scores
-        real_nonlinear_knn_distance_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif(pipeline_type==3):
-        global real_sparse_knn_distance_scores
-        real_sparse_knn_distance_scores = cross_val_score(clf, x_train, y_train, cv=10)
-    elif (pipeline_type == 4):
-        global real_dimension_knn_distance_scores
-        real_dimension_knn_distance_scores = cross_val_score(clf, x_train, y_train, cv=10)
+def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
+    scores = {}
+    pipeline_name = ["linear", "non-linear", "sparse", "dimension"][pipeline_type]
+    MLModels = {"DTCgini": DecisionTreeClassifier(criterion='gini'),
+                "DTCent": DecisionTreeClassifier(criterion='entropy'),
+                "RFCgini": RandomForestClassifier(criterion='gini'),
+                "RFCent": RandomForestClassifier(criterion='entropy'),
+                "LRnone": LogisticRegression(penalty='none'),
+                "LRl1": LogisticRegression(penalty='l1', solver='liblinear', l1_ratio=1),
+                "LRl2": LogisticRegression(penalty='l2'),
+                "LRmix": LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5),
+                "BNB": BernoulliNB(), "GNB": GaussianNB(), "MnNB": MultinomialNB(), "CNB": ComplementNB(),
+                "SVMsig": svm.SVC(kernel="sigmoid"), "SVMpoly": svm.SVC(kernel="poly"), "SVMrbf": svm.SVC(kernel="rbf"),
+                "KNCunif": KNeighborsClassifier(weights='uniform'), "KNCdist": KNeighborsClassifier(weights='distance')}
+    x_train_rdy = x_train
+    x_test_rdy = x_test
+    for key in MLModels.keys():
+        if key in ["MnNB", "CNB"]:
+            min_max_scaler = MinMaxScaler()
+            x_train_rdy = min_max_scaler.fit_transform(x_train)
+            x_test_rdy = min_max_scaler.transform(x_test)
+        clf = MLModels[key]
+        clf = clf.fit(x_train_rdy, y_train)
+        scores[f'{world}_{pipeline_name}_{key}'] = cross_val_score(clf, x_test_rdy, y_test, cv=10)
+    return scores
+# Decision Tree
+#     clf = DecisionTreeClassifier(criterion='gini')
+#     clf = clf.fit(x_train, y_train)
+#     y_pred = clf.predict(x_test)
+#     if(pipeline_type==1):
+#         global real_linear_dt_scores
+#         real_linear_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
+#     elif(pipeline_type==2):
+#         global real_nonlinear_dt_scores
+#         real_nonlinear_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
+#     elif(pipeline_type==3):
+#         global real_sparse_dt_scores
+#         real_sparse_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
+#     elif (pipeline_type == 4):
+#         global real_dimension_dt_scores
+#         real_dimension_dt_scores = cross_val_score(clf, x_train, y_train, cv=10)
+
+
 
 print("This is the first occurance of the real-world benchmarks")
-realworld_evaluate(pipeline_type)
 
-pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+def evaluate_real(num_train, num_test):
+    for pipeline_type in range(1,5):
+        x_train, y_train, x_test, y_test = get_data_from_real_world(pipeline_type, num_train, num_test)
+        world_evaluate("real", pipeline_type, x_train, y_train, x_test, y_test)
 
-realworld_evaluate(pipeline_type)
+# pipeline_type = 2
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+#
+# realworld_evaluate(pipeline_type)
 
-pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-
-realworld_evaluate(pipeline_type)
-
-pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-
-realworld_evaluate(pipeline_type)
-
-pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-
-# Simulation library structure learning section
-
-print("This is the first occurance of the simulated benchmarks")
-simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
+# import_real_world_csv(pipeline_type)
+#
+# # Simulation library structure learning section
+#
+# print("This is the first occurance of the simulated benchmarks")
+# simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
 
 #simulation_notears.notears_nonlinear_setup(train_data_numpy[0:100], 10000, 5000)
 
@@ -444,86 +240,100 @@ def run_learned_workflows(x_train, y_train, pipeline_type, alg):
 #    import_real_world_csv(pipeline_type)
 
 #notears simulation scoring
-notears_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
+# notears_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
+#
+# simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
 
-simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
+def evaluate_on_learned_world(num_train_rl, num_train_lr, num_test_lr):
+    world = "notears"
+    loss_names = ["logistic", "l2", "poisson"]
+    pipelines = list(range(1, 5))
+    results = {}
+    for pipeline in pipelines:
+        x_train_rl, y_train_rl, x_test_rl, y_test_rl = get_data_from_real_world(pipeline, num_train_rl, 0)
+        for loss in loss_names:
+            x_train_lr, y_train_lr, x_test_lr, y_test_lr = get_data_from_learned_world(world, loss, np.concatenate([x_train_rl, y_train_rl], axis=1), num_train_lr, num_test_lr, pipeline_type)
+            scores = world_evaluate(world, pipeline, x_train_lr, y_train_lr, x_test_lr, y_test_lr)
+            results.update(scores)
+    return results
 
-notears_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
-pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-
-notears_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
-pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-
-notears_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (Logistic)")
-
-#notears hyperparameter loss function l2
-pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-notears_l2_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
-
-pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-
-notears_l2_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
-pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-
-notears_l2_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
-pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-
-notears_l2_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (L2)")
-
-#notears hyperparameter loss function poisson
-pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-notears_poisson_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
-
-pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-
-notears_poisson_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
-pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-
-notears_poisson_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
-pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-import_real_world_csv(pipeline_type)
-simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-import_simulated_csv()
-
-notears_poisson_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (Poisson)")
+# pipeline_type = 3
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Logistic)")
+# pipeline_type = 4
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (Logistic)")
+#
+# #notears hyperparameter loss function l2
+# pipeline_type = 1
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+# notears_l2_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
+#
+# pipeline_type = 2
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_l2_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
+# pipeline_type = 3
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_l2_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (L2)")
+# pipeline_type = 4
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_l2_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (L2)")
+#
+# #notears hyperparameter loss function poisson
+# pipeline_type = 1
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+# notears_poisson_linear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
+#
+# pipeline_type = 2
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_poisson_nonlinear_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
+# pipeline_type = 3
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_poisson_sparse_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:4], no_tears_sample_train.iloc[:,4], pipeline_type, "NO TEARS (Poisson)")
+# pipeline_type = 4
+# simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+# import_real_world_csv(pipeline_type)
+# simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
+# import_simulated_csv()
+#
+# notears_poisson_dimension_dict_scores = run_learned_workflows(no_tears_sample_train.iloc[:,0:10], no_tears_sample_train.iloc[:,10], pipeline_type, "NO TEARS (Poisson)")
 
 #bnlearn simulation scoring
 pipeline_type = 1

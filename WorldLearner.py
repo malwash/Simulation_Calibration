@@ -2,8 +2,9 @@ import bnlearn
 import notears
 import importlib
 
+
 class WorldLearner:
-    def __init__(self, pkg_name, alg_name):
+    def __init__(self, pkg_name: str, alg_name: str):
         self.pkg_name = pkg_name
         self.alg_name = alg_name
         self.learner = self.get_alg(pkg_name, alg_name)

@@ -5,17 +5,18 @@ from notears.linear import notears_linear
 from notears.nonlinear import notears_nonlinear, NotearsMLP
 
 
-def notears_setup(train_data, training_n, test_n):
+def notears_setup_logistic(train_data, training_n, test_n):
     nt_sampling = notears_linear(train_data[0:100], lambda1=0.01, loss_type='logistic')
     nt_sampling_train = utils.simulate_linear_sem(nt_sampling, training_n, 'logistic')
     np.savetxt('W_est_train.csv', nt_sampling_train, delimiter=',')
+    return nt_sampling_train,
 
-def notears_setup_b(train_data, training_n, test_n):
+def notears_setup_l2(train_data, training_n, test_n):
     nt_sampling = notears_linear(train_data[0:100], lambda1=0.01, loss_type='l2')
     nt_sampling_train = utils.simulate_linear_sem(nt_sampling, training_n, 'logistic')
     np.savetxt('W_est_train.csv', nt_sampling_train, delimiter=',')
 
-def notears_setup_c(train_data, training_n, test_n):
+def notears_setup_poisson(train_data, training_n, test_n):
     nt_sampling = notears_linear(train_data[0:100], lambda1=0.01, loss_type='poisson')
     nt_sampling_train = utils.simulate_linear_sem(nt_sampling, training_n, 'logistic')
     np.savetxt('W_est_train.csv', nt_sampling_train, delimiter=',')
