@@ -46,6 +46,7 @@ def bnlearn_setup_hc(train_data, pipeline_type):
         result_edit = result[:, :].reshape([-1, 11])
     print("this is the output shape after structure learning", result_edit.shape)
     np.savetxt('Z_est_train.csv', result_edit, delimiter=',')
+    return result_edit
 
 def bnlearn_setup_tabu(train_data, pipeline_type):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -83,6 +84,7 @@ def bnlearn_setup_tabu(train_data, pipeline_type):
         result_edit = result[:, :].reshape([-1, 11])
     print("this is the output shape after structure learning", result_edit.shape)
     np.savetxt('Z_est_train.csv', result_edit, delimiter=',')
+    return result_edit
 
 def bnlearn_setup_iamb(train_data, pipeline_type):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -120,6 +122,7 @@ def bnlearn_setup_iamb(train_data, pipeline_type):
         result_edit = result[:, :].reshape([-1, 11])
     print("this is the output shape after structure learning", result_edit.shape)
     np.savetxt('Z_est_train.csv', result_edit, delimiter=',')
+    return result_edit
 
 def bnlearn_setup_pc(train_data, pipeline_type):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -157,6 +160,7 @@ def bnlearn_setup_pc(train_data, pipeline_type):
         result_edit = result[:, :].reshape([-1, 11])
     print("this is the output shape after structure learning", result_edit.shape)
     np.savetxt('Z_est_train.csv', result_edit, delimiter=',')
+    return result_edit
 
 def bnlearn_setup_gs(train_data, pipeline_type):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -194,6 +198,7 @@ def bnlearn_setup_gs(train_data, pipeline_type):
         result_edit = result[:, :].reshape([-1, 11])
     print("this is the output shape after structure learning", result_edit.shape)
     np.savetxt('Z_est_train.csv', result_edit, delimiter=',')
+    return result_edit
 
 def bnlearn_setup_mmhc(train_data, pipeline_type):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -231,6 +236,7 @@ def bnlearn_setup_mmhc(train_data, pipeline_type):
         result_edit = result[:, :].reshape([-1, 11])
     print("this is the output shape after structure learning", result_edit.shape)
     np.savetxt('Z_est_train.csv', result_edit, delimiter=',')
+    return result_edit
 
 def bnlearn_setup_rsmax2(train_data, pipeline_type):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -268,6 +274,7 @@ def bnlearn_setup_rsmax2(train_data, pipeline_type):
         result_edit = result[:, :].reshape([-1, 11])
     print("this is the output shape after structure learning", result_edit.shape)
     np.savetxt('Z_est_train.csv', result_edit, delimiter=',')
+    return result_edit
 
 def bnlearn_setup_h2pc(train_data, pipeline_type):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -305,3 +312,4 @@ def bnlearn_setup_h2pc(train_data, pipeline_type):
         result_edit = result[:, :].reshape([-1, 11])
     print("this is the output shape after structure learning", result_edit.shape)
     np.savetxt('Z_est_train.csv', result_edit, delimiter=',')
+    return result_edit
