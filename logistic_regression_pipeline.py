@@ -187,6 +187,8 @@ def realworld_evaluate(pipeline_type):
         real_dimension_lr_l1_scores = accuracy_score(y_test, y_pred)
     lr = LogisticRegression(penalty='l2')
     lr = lr.fit(x_train, y_train)
+    coef = lr.coef_
+    print("This is the coeff ", coef)
     if (pipeline_type == 1):
         global real_linear_lr_l2_scores
         y_pred = lr.predict(x_test)
@@ -424,28 +426,29 @@ print("This is the first occurance of the real-world benchmarks")
 realworld_evaluate(pipeline_type)
 
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 
 realworld_evaluate(pipeline_type)
 
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 
 realworld_evaluate(pipeline_type)
 
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 
 realworld_evaluate(pipeline_type)
 
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
 
 # Simulation library structure learning section
 
 print("This is the first occurance of the simulated benchmarks")
-simulated_data = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 1000)[1]
 
 #simulation_notears.notears_nonlinear_setup(train_data_numpy[0:100], 10000, 5000)
 
@@ -470,7 +473,7 @@ simulated_data = simulation_notears.notears_setup(train_data_numpy[0:100], 1000,
 
 #import_simulated_csv()
 
-def run_learned_workflows(x_train, y_train, pipeline_type, alg):
+def run_learned_workflows(x_train, y_train, x_test, y_test, pipeline_type, alg):
     print("alg:"+alg+", pipeline:"+str(pipeline_type))
     my_dict = {"alg": alg, "pl": pipeline_type, "dt": 0, "dt_e": 0, "rf": 0, "rf_E": 0,"lr": 0, "lr_l1": 0, "lr_l2": 0, "lr_e": 0, "nb": 0, "nb_g": 0,"nb_m": 0,"nb_c": 0,"svm": 0,"svm_l": 0,"svm_po": 0,"svm_r": 0,"svm_pr": 0, "knn": 0, "knn_d": 0}
     my_dict["dt"] = simulation_models.decision_tree(x_train, y_train, x_test, y_test)
@@ -501,137 +504,179 @@ def run_learned_workflows(x_train, y_train, pipeline_type, alg):
 #    import_real_world_csv(pipeline_type)
 
 #notears simulation scoring
-notears_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (Logistic)")
+notears_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (Logistic)")
+notears_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "NO TEARS (Logistic)")
 
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (Logistic)")
+notears_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (Logistic)")
+notears_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4],pipeline_type, "NO TEARS (Logistic)")
+
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (Logistic)")
+notears_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (Logistic)")
+notears_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "NO TEARS (Logistic)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "NO TEARS (Logistic)")
+notears_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "NO TEARS (Logistic)")
+notears_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "NO TEARS (Logistic)")
 
 #notears hyperparameter loss function l2
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
-notears_l2_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (L2)")
+simulated_data_train = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 1000)[1]
+notears_l2_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (L2)")
+notears_l2_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4],pipeline_type, "NO TEARS (L2)")
 
 pipeline_type = 2
 simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_l2_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (L2)")
+notears_l2_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (L2)")
+notears_l2_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4],pipeline_type, "NO TEARS (L2)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_l2_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (L2)")
+notears_l2_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (L2)")
+notears_l2_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "NO TEARS (L2)")
 pipeline_type = 4
 simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup_b(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_l2_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "NO TEARS (L2)")
+notears_l2_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "NO TEARS (L2)")
+notears_l2_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10],pipeline_type, "NO TEARS (L2)")
 
 #notears hyperparameter loss function poisson
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
-notears_poisson_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (Poisson)")
+simulated_data_train = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 1000)[1]
+notears_poisson_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (Poisson)")
+notears_poisson_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "NO TEARS (Poisson)")
 
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_poisson_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (Poisson)")
+notears_poisson_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (Poisson)")
+notears_poisson_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "NO TEARS (Poisson)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_poisson_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "NO TEARS (Poisson)")
+notears_poisson_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "NO TEARS (Poisson)")
+notears_poisson_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4],pipeline_type, "NO TEARS (Poisson)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 5000)
+simulated_data_train = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 1000)[0]
+simulated_data_test = simulation_notears.notears_setup_c(train_data_numpy[0:100], 1000, 1000)[1]
 
-notears_poisson_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "NO TEARS (Poisson)")
+notears_poisson_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "NO TEARS (Poisson)")
+notears_poisson_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10],pipeline_type, "NO TEARS (Poisson)")
 
 #bnlearn simulation scoring
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)[1]
 
-bnlearn_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (HC)")
+bnlearn_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (HC)")
+bnlearn_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (HC)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)[1]
 
-bnlearn_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (HC)")
+bnlearn_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (HC)")
+bnlearn_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (HC)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)[1]
 
-bnlearn_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (HC)")
+bnlearn_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (HC)")
+bnlearn_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (HC)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)
-bnlearn_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "BN LEARN (HC)")
+simulated_data_train = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)[1]
+bnlearn_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "BN LEARN (HC)")
+bnlearn_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "BN LEARN (HC)")
 
 #Run hyperparameter of bnlearn - tabu
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)[1]
 
-bnlearn_tabu_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (TABU)")
+bnlearn_tabu_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (TABU)")
+bnlearn_tabu_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (TABU)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)[1]
 
-bnlearn_tabu_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (TABU)")
+bnlearn_tabu_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (TABU)")
+bnlearn_tabu_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (TABU)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)[1]
 
-bnlearn_tabu_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (TABU)")
+bnlearn_tabu_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (TABU)")
+bnlearn_tabu_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (TABU)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)
-bnlearn_tabu_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "BN LEARN (TABU)")
+simulated_data_train = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)[1]
+bnlearn_tabu_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "BN LEARN (TABU)")
+bnlearn_tabu_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "BN LEARN (TABU)")
 #end of tabu workflows
 
 #Run hyperparameter of bnlearn - pc
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_pc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_pc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_pc(train_data[0:100], pipeline_type)[1]
 
-bnlearn_pc_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (PC)")
+bnlearn_pc_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (PC)")
+bnlearn_pc_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (PC)")
 #pipeline_type = 2
 #simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 #import_real_world_csv(pipeline_type)
@@ -716,131 +761,171 @@ bnlearn_pc_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], sim
 
 #Run hyperparameter of bnlearn - mmhc
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)[1]
 
-bnlearn_mmhc_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (MMHC)")
+bnlearn_mmhc_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (MMHC)")
+bnlearn_mmhc_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (MMHC)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_train = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
 
-bnlearn_mmhc_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (MMHC)")
+bnlearn_mmhc_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (MMHC)")
+bnlearn_mmhc_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (MMHC)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_train = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
 
-bnlearn_mmhc_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (MMHC)")
+bnlearn_mmhc_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (MMHC)")
+bnlearn_mmhc_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4],pipeline_type, "BN LEARN (MMHC)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-bnlearn_mmhc_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "BN LEARN (MMHC)")
+simulated_data_train = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+bnlearn_mmhc_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "BN LEARN (MMHC)")
+bnlearn_mmhc_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "BN LEARN (MMHC)")
 #end of mmhc workflows
 
 #Run hyperparameter of bnlearn - rsmax2
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)[1]
 
-bnlearn_rsmax2_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (RSMAX2)")
+bnlearn_rsmax2_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (RSMAX2)")
+bnlearn_rsmax2_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (RSMAX2)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_train = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
 
-bnlearn_rsmax2_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (RSMAX2)")
+bnlearn_rsmax2_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (RSMAX2)")
+bnlearn_rsmax2_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (RSMAX2)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_train = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
 
-bnlearn_rsmax2_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (RSMAX2)")
+bnlearn_rsmax2_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (RSMAX2)")
+bnlearn_rsmax2_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (RSMAX2)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-bnlearn_rsmax2_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "BN LEARN (RSMAX2)")
+simulated_data_train = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+bnlearn_rsmax2_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "BN LEARN (RSMAX2)")
+bnlearn_rsmax2_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "BN LEARN (RSMAX2)")
 #end of rsmax2 workflows
 
 #Run hyperparameter of bnlearn - h2pc
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)[1]
 
-bnlearn_h2pc_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (H2PC)")
+bnlearn_h2pc_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (H2PC)")
+bnlearn_h2pc_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (H2PC)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_train = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
 
-bnlearn_h2pc_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (H2PC)")
+bnlearn_h2pc_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (H2PC)")
+bnlearn_h2pc_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4],pipeline_type, "BN LEARN (H2PC)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_train = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
 
-bnlearn_h2pc_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "BN LEARN (H2PC)")
+bnlearn_h2pc_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "BN LEARN (H2PC)")
+bnlearn_h2pc_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "BN LEARN (H2PC)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-bnlearn_h2pc_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "BN LEARN (H2PC)")
+simulated_data_train = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)[0] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+simulated_data_test = simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)[1] #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
+bnlearn_h2pc_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "BN LEARN (H2PC)")
+bnlearn_h2pc_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "BN LEARN (H2PC)")
 #end of h2pc workflows
 
 #pomegranate simulation scoring
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)[1]
 
-pomegranate_exact_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "POMEGRANATE (EXACT)")
+pomegranate_exact_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "POMEGRANATE (EXACT)")
+pomegranate_exact_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "POMEGRANATE (EXACT)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)[1]
 
-pomegranate_exact_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "POMEGRANATE (EXACT)")
+pomegranate_exact_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "POMEGRANATE (EXACT)")
+pomegranate_exact_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "POMEGRANATE (EXACT)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)[1]
 
-pomegranate_exact_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "POMEGRANATE (EXACT)")
+pomegranate_exact_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "POMEGRANATE (EXACT)")
+pomegranate_exact_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "POMEGRANATE (EXACT)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)
-pomegranate_exact_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "POMEGRANATE (EXACT)")
+simulated_data_train = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pomegranate.pomegranate_setup(train_data[0:100], pipeline_type)[1]
+pomegranate_exact_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "POMEGRANATE (EXACT)")
+pomegranate_exact_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "POMEGRANATE (EXACT)")
 
 #pomegranate hyperparameter simulation scoring - greedy
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)[1]
 
-pomegranate_greedy_linear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "POMEGRANATE (GREEDY)")
+pomegranate_greedy_linear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "POMEGRANATE (GREEDY)")
+pomegranate_greedy_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4],pipeline_type, "POMEGRANATE (GREEDY)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)[1]
 
-pomegranate_greedy_nonlinear_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "POMEGRANATE (GREEDY)")
+pomegranate_greedy_nonlinear_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "POMEGRANATE (GREEDY)")
+pomegranate_greedy_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "POMEGRANATE (GREEDY)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)[1]
 
-pomegranate_greedy_sparse_dict_scores = run_learned_workflows(simulated_data[:,0:4], simulated_data[:,4], pipeline_type, "POMEGRANATE (GREEDY)")
+pomegranate_greedy_sparse_dict_scores = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], x_test, y_test, pipeline_type, "POMEGRANATE (GREEDY)")
+pomegranate_greedy_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:4], simulated_data_train[:,4], simulated_data_test[:,0:4], simulated_data_test[:,4], pipeline_type, "POMEGRANATE (GREEDY)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)
-pomegranate_greedy_dimension_dict_scores = run_learned_workflows(simulated_data[:,0:10], simulated_data[:,10], pipeline_type, "POMEGRANATE (GREEDY)")
+simulated_data_train = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pomegranate.pomegranate_setup_b(train_data[0:100], pipeline_type)[1]
+pomegranate_greedy_dimension_dict_scores = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], x_test, y_test, pipeline_type, "POMEGRANATE (GREEDY)")
+pomegranate_greedy_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "POMEGRANATE (GREEDY)")
 
 #pomegranate hyperparameter simulation scoring - Chow-liu
 #pipeline_type = 1
@@ -873,78 +958,102 @@ pomegranate_greedy_dimension_dict_scores = run_learned_workflows(simulated_data[
 
 #pgmpy simulation scoring -Hill-climbing
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)[1]
 
-pgmpy_hc_linear_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (HC)")
+pgmpy_hc_linear_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (HC)")
+pgmpy_hc_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (HC)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)[1]
 
-pgmpy_hc_nonlinear_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (HC)")
+pgmpy_hc_nonlinear_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (HC)")
+pgmpy_hc_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (HC)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)[1]
 
-pgmpy_hc_sparse_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (HC)")
+pgmpy_hc_sparse_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (HC)")
+pgmpy_hc_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (HC)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)
-pgmpy_hc_dimension_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:10], simulated_data.iloc[:,10], pipeline_type, "PGMPY (HC)")
+simulated_data_train = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_hc(train_data[0:100], pipeline_type)[1]
+pgmpy_hc_dimension_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:10], simulated_data_train.iloc[:,10], x_test, y_test, pipeline_type, "PGMPY (HC)")
+pgmpy_hc_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:10], simulated_data_train.iloc[:,10], simulated_data_test.iloc[:,0:10], simulated_data_test.iloc[:,10], pipeline_type, "PGMPY (HC)")
 
 #pgmpy simulation scoring - Tree search
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)[1]
 
-pgmpy_tree_linear_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (Tree)")
+pgmpy_tree_linear_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (Tree)")
+pgmpy_tree_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (Tree)")
 pipeline_type = 2
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)[1]
 
-pgmpy_tree_nonlinear_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (Tree)")
+pgmpy_tree_nonlinear_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (Tree)")
+pgmpy_tree_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (Tree)")
 pipeline_type = 3
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)[1]
 
-pgmpy_tree_sparse_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (TREE)")
+pgmpy_tree_sparse_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (TREE)")
+pgmpy_tree_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (TREE)")
 pipeline_type = 4
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)
-pgmpy_tree_dimension_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:10], simulated_data.iloc[:,10], pipeline_type, "PGMPY (TREE)")
+simulated_data_train = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_tree(train_data[0:100], pipeline_type)[1]
+pgmpy_tree_dimension_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:10], simulated_data_train.iloc[:,10], x_test, y_test, pipeline_type, "PGMPY (TREE)")
+pgmpy_tree_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:10], simulated_data_train.iloc[:,10], simulated_data_test.iloc[:,0:10], simulated_data_test.iloc[:,10], pipeline_type, "PGMPY (TREE)")
 
 #pgmpy simulation scoring - MMHC
 pipeline_type = 1
-simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
+simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)[1]
 
-pgmpy_mmhc_linear_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (MMHC)")
+pgmpy_mmhc_linear_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (MMHC)")
+pgmpy_mmhc_linear_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (MMHC)")
 pipeline_type = 2
 simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)[1]
 
-pgmpy_mmhc_nonlinear_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (MMHC)")
+pgmpy_mmhc_nonlinear_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (MMHC)")
+pgmpy_mmhc_nonlinear_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (MMHC)")
 pipeline_type = 3
 simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)
+simulated_data_train = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)[1]
 
-pgmpy_mmhc_sparse_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:4], simulated_data.iloc[:,4], pipeline_type, "PGMPY (MMHC)")
+pgmpy_mmhc_sparse_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], x_test, y_test, pipeline_type, "PGMPY (MMHC)")
+pgmpy_mmhc_sparse_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:4], simulated_data_train.iloc[:,4], simulated_data_test.iloc[:,0:4], simulated_data_test.iloc[:,4], pipeline_type, "PGMPY (MMHC)")
 pipeline_type = 4
 simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
 import_real_world_csv(pipeline_type)
-simulated_data = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)
-pgmpy_mmhc_dimension_dict_scores = run_learned_workflows(simulated_data.iloc[:,0:10], simulated_data.iloc[:,10], pipeline_type, "PGMPY (MMHC)")
+simulated_data_train = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)[0]
+simulated_data_test = simulation_pgmpy.pgmpy_setup_mmhc(train_data[0:100], pipeline_type)[1]
+pgmpy_mmhc_dimension_dict_scores = run_learned_workflows(simulated_data_train.iloc[:,0:10], simulated_data_train.iloc[:,10], x_test, y_test, pipeline_type, "PGMPY (MMHC)")
+pgmpy_mmhc_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train.iloc[:,0:10], simulated_data_train.iloc[:,10], simulated_data_test.iloc[:,0:10], simulated_data_test.iloc[:,10], pipeline_type, "PGMPY (MMHC)")
 
 #pgmpy simulation scoring - PC - - single positional indexer is out-of-bounds doesnt output same shape as given
 #pipeline_type = 1
@@ -1673,518 +1782,8 @@ def write_real_to_csv():
 write_real_to_csv()
 
 def write_real_to_figures():
-    plt.style.use('_mpl-gallery')
-    fs = 10  # fontsize
 
-    fig, ax = plt.subplots(nrows=17, ncols=4,figsize=(80, 80), sharey=True)
-    fig.tight_layout(h_pad=2)
-    ax[0, 0].boxplot([notears_l2_linear_dict_scores["dt"], notears_linear_dict_scores["dt"], notears_poisson_linear_dict_scores["dt"], bnlearn_linear_dict_scores["dt"], bnlearn_tabu_linear_dict_scores["dt"], bnlearn_pc_linear_dict_scores["dt"], [0], [0], bnlearn_mmhc_linear_dict_scores["dt"], bnlearn_rsmax2_linear_dict_scores["dt"], bnlearn_h2pc_linear_dict_scores["dt"]],showmeans=True, meanline=True)
-    ax[0, 0].set_title('DT-gini-Linear', fontsize=fs)
-    ax[0, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[0, 1].boxplot([notears_l2_nonlinear_dict_scores["dt"], notears_nonlinear_dict_scores["dt"], notears_poisson_nonlinear_dict_scores["dt"], bnlearn_nonlinear_dict_scores["dt"], bnlearn_tabu_nonlinear_dict_scores["dt"], [0], [0], [0], bnlearn_mmhc_nonlinear_dict_scores["dt"], bnlearn_rsmax2_nonlinear_dict_scores["dt"], bnlearn_h2pc_nonlinear_dict_scores["dt"]], showmeans=True, meanline=True)
-    ax[0, 1].set_title('DT-gini-Nonlinear', fontsize=fs)
-    ax[0, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[0, 2].boxplot([notears_l2_sparse_dict_scores["dt"], notears_sparse_dict_scores["dt"], notears_poisson_sparse_dict_scores["dt"], bnlearn_sparse_dict_scores["dt"], bnlearn_tabu_sparse_dict_scores["dt"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["dt"], bnlearn_rsmax2_sparse_dict_scores["dt"], bnlearn_h2pc_sparse_dict_scores["dt"]],showmeans=True, meanline=True)
-    ax[0, 2].set_title('DT-gini-Sparse', fontsize=fs)
-    ax[0, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[0, 3].boxplot([notears_l2_dimension_dict_scores["dt"], notears_dimension_dict_scores["dt"], notears_poisson_dimension_dict_scores["dt"], bnlearn_dimension_dict_scores["dt"], bnlearn_tabu_dimension_dict_scores["dt"], [0], [0], [0], bnlearn_mmhc_dimension_dict_scores["dt"], bnlearn_rsmax2_dimension_dict_scores["dt"], bnlearn_h2pc_dimension_dict_scores["dt"]], showmeans=True, meanline=True)
-    ax[0, 3].set_title('DT-gini-Dimensional', fontsize=fs)
-    ax[0, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[1, 0].boxplot([notears_l2_linear_dict_scores["dt"], notears_linear_dict_scores["dt"],
-                      notears_poisson_linear_dict_scores["dt"], bnlearn_linear_dict_scores["dt"],
-                      bnlearn_tabu_linear_dict_scores["dt"], bnlearn_pc_linear_dict_scores["dt"],
-                      [0], [0],
-                      bnlearn_mmhc_linear_dict_scores["dt"], bnlearn_rsmax2_linear_dict_scores["dt"],
-                      bnlearn_h2pc_linear_dict_scores["dt"]], showmeans=True, meanline=True)
-    ax[1, 0].set_title('DT-entropy-Linear', fontsize=fs)
-    ax[1, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[1, 1].boxplot([notears_l2_nonlinear_dict_scores["dt_e"], notears_nonlinear_dict_scores["dt_e"],
-                      notears_poisson_nonlinear_dict_scores["dt_e"], bnlearn_nonlinear_dict_scores["dt_e"],
-                      bnlearn_tabu_nonlinear_dict_scores["dt_e"], [0], [0], [0],
-                      bnlearn_mmhc_nonlinear_dict_scores["dt_e"], bnlearn_rsmax2_nonlinear_dict_scores["dt_e"],
-                      bnlearn_h2pc_nonlinear_dict_scores["dt_e"]], showmeans=True, meanline=True)
-    ax[1, 1].set_title('DT-entropy-Nonlinear', fontsize=fs)
-    ax[1, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[1, 2].boxplot([notears_l2_sparse_dict_scores["dt_e"], notears_sparse_dict_scores["dt_e"],
-                      notears_poisson_sparse_dict_scores["dt_e"], bnlearn_sparse_dict_scores["dt_e"],
-                      bnlearn_tabu_sparse_dict_scores["dt_e"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["dt_e"],
-                      bnlearn_rsmax2_sparse_dict_scores["dt_e"], bnlearn_h2pc_sparse_dict_scores["dt_e"]], showmeans=True,
-                     meanline=True)
-    ax[1, 2].set_title('DT-entropy-Sparse', fontsize=fs)
-    ax[1, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[1, 3].boxplot([notears_l2_dimension_dict_scores["dt_e"], notears_dimension_dict_scores["dt_e"],
-                      notears_poisson_dimension_dict_scores["dt_e"], bnlearn_dimension_dict_scores["dt_e"],
-                      bnlearn_tabu_dimension_dict_scores["dt_e"], [0], [0], [0], bnlearn_mmhc_dimension_dict_scores["dt_e"],
-                      bnlearn_rsmax2_dimension_dict_scores["dt_e"], bnlearn_h2pc_dimension_dict_scores["dt_e"]],
-                     showmeans=True, meanline=True)
-    ax[1, 3].set_title('DT-entropy-Dimensional', fontsize=fs)
-    ax[1, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[2, 0].boxplot([notears_l2_linear_dict_scores["rf"], notears_linear_dict_scores["rf"], notears_poisson_linear_dict_scores["rf"], bnlearn_linear_dict_scores["rf"], bnlearn_tabu_linear_dict_scores["rf"], bnlearn_pc_linear_dict_scores["rf"], [0], [0], bnlearn_mmhc_linear_dict_scores["rf"], bnlearn_rsmax2_linear_dict_scores["rf"], bnlearn_h2pc_linear_dict_scores["rf"]], showmeans=True, meanline=True)
-    ax[2, 0].set_title('RF-gini-Linear', fontsize=fs)
-    ax[2, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[2, 1].boxplot([notears_l2_nonlinear_dict_scores["rf"], notears_nonlinear_dict_scores["rf"], notears_poisson_nonlinear_dict_scores["rf"], bnlearn_nonlinear_dict_scores["rf"], bnlearn_tabu_nonlinear_dict_scores["rf"], [0], [0], [0], bnlearn_mmhc_nonlinear_dict_scores["rf"], bnlearn_rsmax2_nonlinear_dict_scores["rf"], bnlearn_h2pc_nonlinear_dict_scores["rf"]], showmeans=True, meanline=True)
-    ax[2, 1].set_title('RF-gini-Nonlinear', fontsize=fs)
-    ax[2, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[2, 2].boxplot([notears_l2_sparse_dict_scores["rf"], notears_sparse_dict_scores["rf"],notears_poisson_sparse_dict_scores["rf"], bnlearn_sparse_dict_scores["rf"],bnlearn_tabu_sparse_dict_scores["rf"], [0],[0], [0],bnlearn_mmhc_sparse_dict_scores["rf"], bnlearn_rsmax2_sparse_dict_scores["rf"],bnlearn_h2pc_sparse_dict_scores["rf"]], showmeans=True, meanline=True)
-    ax[2, 2].set_title('RF-gini-Sparse', fontsize=fs)
-    ax[2, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[2, 3].boxplot([notears_l2_dimension_dict_scores["rf"], notears_dimension_dict_scores["rf"],notears_poisson_dimension_dict_scores["rf"], bnlearn_dimension_dict_scores["rf"],bnlearn_tabu_dimension_dict_scores["rf"], [0],[0], [0],bnlearn_mmhc_dimension_dict_scores["rf"], bnlearn_rsmax2_dimension_dict_scores["rf"],bnlearn_h2pc_dimension_dict_scores["rf"]], showmeans=True, meanline=True)
-    ax[2, 3].set_title('RF-gini-Dimensional', fontsize=fs)
-    ax[2, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[3, 0].boxplot([notears_l2_linear_dict_scores["rf_e"], notears_linear_dict_scores["rf_e"],
-                      notears_poisson_linear_dict_scores["rf_e"], bnlearn_linear_dict_scores["rf_e"],
-                      bnlearn_tabu_linear_dict_scores["rf_e"], bnlearn_pc_linear_dict_scores["rf_e"],
-                      [0], [0],
-                      bnlearn_mmhc_linear_dict_scores["rf_e"], bnlearn_rsmax2_linear_dict_scores["rf_e"],
-                      bnlearn_h2pc_linear_dict_scores["rf_e"]], showmeans=True, meanline=True)
-    ax[3, 0].set_title('RF-entropy-Linear', fontsize=fs)
-    ax[3, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[3, 1].boxplot([notears_l2_nonlinear_dict_scores["rf_e"], notears_nonlinear_dict_scores["rf_e"],
-                      notears_poisson_nonlinear_dict_scores["rf_e"], bnlearn_nonlinear_dict_scores["rf_e"],
-                      bnlearn_tabu_nonlinear_dict_scores["rf_e"], [0], [0], [0],
-                      bnlearn_mmhc_nonlinear_dict_scores["rf_e"], bnlearn_rsmax2_nonlinear_dict_scores["rf_e"],
-                      bnlearn_h2pc_nonlinear_dict_scores["rf_e"]], showmeans=True, meanline=True)
-    ax[3, 1].set_title('RF-entropy-Nonlinear', fontsize=fs)
-    ax[3, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[3, 2].boxplot([notears_l2_sparse_dict_scores["rf_e"], notears_sparse_dict_scores["rf_e"],
-                      notears_poisson_sparse_dict_scores["rf_e"], bnlearn_sparse_dict_scores["rf_e"],
-                      bnlearn_tabu_sparse_dict_scores["rf_e"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["rf_e"],
-                      bnlearn_rsmax2_sparse_dict_scores["rf_e"], bnlearn_h2pc_sparse_dict_scores["rf_e"]], showmeans=True,
-                     meanline=True)
-    ax[3, 2].set_title('RF-entropy-Sparse', fontsize=fs)
-    ax[3, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[3, 3].boxplot([notears_l2_dimension_dict_scores["rf_e"], notears_dimension_dict_scores["rf_e"],
-                      notears_poisson_dimension_dict_scores["rf_e"], bnlearn_dimension_dict_scores["rf_e"],
-                      bnlearn_tabu_dimension_dict_scores["rf_e"], [0], [0], [0], bnlearn_mmhc_dimension_dict_scores["rf_e"],
-                      bnlearn_rsmax2_dimension_dict_scores["rf_e"], bnlearn_h2pc_dimension_dict_scores["rf_e"]],
-                     showmeans=True, meanline=True)
-    ax[3, 3].set_title('RF-entropy-Dimensional', fontsize=fs)
-    ax[3, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[4, 0].boxplot([notears_l2_linear_dict_scores["lr"], notears_linear_dict_scores["lr"],notears_poisson_linear_dict_scores["lr"], bnlearn_linear_dict_scores["lr"],bnlearn_tabu_linear_dict_scores["lr"], bnlearn_pc_linear_dict_scores["lr"],[0], [0],bnlearn_mmhc_linear_dict_scores["lr"], bnlearn_rsmax2_linear_dict_scores["lr"],bnlearn_h2pc_linear_dict_scores["lr"]], showmeans=True, meanline=True)
-    ax[4, 0].set_title('LR-none-Linear', fontsize=fs)
-    ax[4, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[4, 1].boxplot([notears_l2_nonlinear_dict_scores["lr"], notears_nonlinear_dict_scores["lr"],notears_poisson_nonlinear_dict_scores["lr"], bnlearn_nonlinear_dict_scores["lr"],bnlearn_tabu_nonlinear_dict_scores["lr"], [0],[0], [0],bnlearn_mmhc_nonlinear_dict_scores["lr"], bnlearn_rsmax2_nonlinear_dict_scores["lr"],bnlearn_h2pc_nonlinear_dict_scores["lr"]], showmeans=True, meanline=True)
-    ax[4, 1].set_title('LR-none-Nonlinear', fontsize=fs)
-    ax[4, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[4, 2].boxplot([notears_l2_sparse_dict_scores["lr"], notears_sparse_dict_scores["lr"],notears_poisson_sparse_dict_scores["lr"], bnlearn_sparse_dict_scores["lr"],bnlearn_tabu_sparse_dict_scores["lr"], [0],[0], [0],bnlearn_mmhc_sparse_dict_scores["lr"], bnlearn_rsmax2_sparse_dict_scores["lr"],bnlearn_h2pc_sparse_dict_scores["lr"]],  showmeans=True, meanline=True)
-    ax[4, 2].set_title('LR-none-Sparse', fontsize=fs)
-    ax[4, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[4, 3].boxplot([notears_l2_dimension_dict_scores["lr"], notears_dimension_dict_scores["lr"],notears_poisson_dimension_dict_scores["lr"], bnlearn_dimension_dict_scores["lr"],bnlearn_tabu_dimension_dict_scores["lr"], [0],[0], [0],bnlearn_mmhc_dimension_dict_scores["lr"], bnlearn_rsmax2_dimension_dict_scores["lr"],bnlearn_h2pc_dimension_dict_scores["lr"]], showmeans=True, meanline=True)
-    ax[4, 3].set_title('LR-none-Dimensional', fontsize=fs)
-    ax[4, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[5, 0].boxplot([notears_l2_linear_dict_scores["lr_l1"], notears_linear_dict_scores["lr_l1"],
-                      notears_poisson_linear_dict_scores["lr_l1"], bnlearn_linear_dict_scores["lr_l1"],
-                      bnlearn_tabu_linear_dict_scores["lr_l1"], bnlearn_pc_linear_dict_scores["lr_l1"],
-                      [0], [0],
-                      bnlearn_mmhc_linear_dict_scores["lr_l1"], bnlearn_rsmax2_linear_dict_scores["lr_l1"],
-                      bnlearn_h2pc_linear_dict_scores["lr_l1"]], showmeans=True, meanline=True)
-    ax[5, 0].set_title('LR-L1-Linear', fontsize=fs)
-    ax[5, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[5, 1].boxplot([notears_l2_nonlinear_dict_scores["lr_l1"], notears_nonlinear_dict_scores["lr_l1"],
-                      notears_poisson_nonlinear_dict_scores["lr_l1"], bnlearn_nonlinear_dict_scores["lr_l1"],
-                      bnlearn_tabu_nonlinear_dict_scores["lr_l1"], [0], [0], [0],
-                      bnlearn_mmhc_nonlinear_dict_scores["lr_l1"], bnlearn_rsmax2_nonlinear_dict_scores["lr_l1"],
-                      bnlearn_h2pc_nonlinear_dict_scores["lr_l1"]], showmeans=True, meanline=True)
-    ax[5, 1].set_title('LR-L1-Nonlinear', fontsize=fs)
-    ax[5, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[5, 2].boxplot([notears_l2_sparse_dict_scores["lr_l1"], notears_sparse_dict_scores["lr_l1"],
-                      notears_poisson_sparse_dict_scores["lr_l1"], bnlearn_sparse_dict_scores["lr_l1"],
-                      bnlearn_tabu_sparse_dict_scores["lr_l1"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["lr_l1"],
-                      bnlearn_rsmax2_sparse_dict_scores["lr_l1"], bnlearn_h2pc_sparse_dict_scores["lr_l1"]], showmeans=True,
-                     meanline=True)
-    ax[5, 2].set_title('LR-L1-Sparse', fontsize=fs)
-    ax[5, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[5, 3].boxplot([notears_l2_dimension_dict_scores["lr_l1"], notears_dimension_dict_scores["lr_l1"],
-                      notears_poisson_dimension_dict_scores["lr_l1"], bnlearn_dimension_dict_scores["lr_l1"],
-                      bnlearn_tabu_dimension_dict_scores["lr_l1"], [0], [0], [0], bnlearn_mmhc_dimension_dict_scores["lr_l1"],
-                      bnlearn_rsmax2_dimension_dict_scores["lr_l1"], bnlearn_h2pc_dimension_dict_scores["lr_l1"]],
-                     showmeans=True, meanline=True)
-    ax[5, 3].set_title('LR-L1-Dimensional', fontsize=fs)
-    ax[5, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[6, 0].boxplot([notears_l2_linear_dict_scores["lr_l2"], notears_linear_dict_scores["lr_l2"],
-                      notears_poisson_linear_dict_scores["lr_l2"], bnlearn_linear_dict_scores["lr_l2"],
-                      bnlearn_tabu_linear_dict_scores["lr_l2"], bnlearn_pc_linear_dict_scores["lr_l2"],
-                      [0], [0],
-                      bnlearn_mmhc_linear_dict_scores["lr_l2"], bnlearn_rsmax2_linear_dict_scores["lr_l2"],
-                      bnlearn_h2pc_linear_dict_scores["lr_l2"]], showmeans=True, meanline=True)
-    ax[6, 0].set_title('LR-L2-Linear', fontsize=fs)
-    ax[6, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[6, 1].boxplot([notears_l2_nonlinear_dict_scores["lr_l2"], notears_nonlinear_dict_scores["lr_l2"],
-                      notears_poisson_nonlinear_dict_scores["lr_l2"], bnlearn_nonlinear_dict_scores["lr_l2"],
-                      bnlearn_tabu_nonlinear_dict_scores["lr_l2"], [0], [0], [0],
-                      bnlearn_mmhc_nonlinear_dict_scores["lr_l2"], bnlearn_rsmax2_nonlinear_dict_scores["lr_l2"],
-                      bnlearn_h2pc_nonlinear_dict_scores["lr_l2"]], showmeans=True, meanline=True)
-    ax[6, 1].set_title('LR-L2-Nonlinear', fontsize=fs)
-    ax[6, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[6, 2].boxplot([notears_l2_sparse_dict_scores["lr_l2"], notears_sparse_dict_scores["lr_l2"],
-                      notears_poisson_sparse_dict_scores["lr_l2"], bnlearn_sparse_dict_scores["lr_l2"],
-                      bnlearn_tabu_sparse_dict_scores["lr_l2"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["lr_l2"],
-                      bnlearn_rsmax2_sparse_dict_scores["lr_l2"], bnlearn_h2pc_sparse_dict_scores["lr_l2"]], showmeans=True,
-                     meanline=True)
-    ax[6, 2].set_title('LR-L2-Sparse', fontsize=fs)
-    ax[6, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[6, 3].boxplot([notears_l2_dimension_dict_scores["lr_l2"], notears_dimension_dict_scores["lr_l2"],
-                      notears_poisson_dimension_dict_scores["lr_l2"], bnlearn_dimension_dict_scores["lr_l2"],
-                      bnlearn_tabu_dimension_dict_scores["lr_l2"], [0], [0], [0], bnlearn_mmhc_dimension_dict_scores["lr_l2"],
-                      bnlearn_rsmax2_dimension_dict_scores["lr_l2"], bnlearn_h2pc_dimension_dict_scores["lr_l2"]],
-                     showmeans=True, meanline=True)
-    ax[6, 3].set_title('LR-L2-Dimensional', fontsize=fs)
-    ax[6, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[7, 0].boxplot([notears_l2_linear_dict_scores["lr_e"], notears_linear_dict_scores["lr_e"],
-                      notears_poisson_linear_dict_scores["lr_e"], bnlearn_linear_dict_scores["lr_e"],
-                      bnlearn_tabu_linear_dict_scores["lr_e"], bnlearn_pc_linear_dict_scores["lr_e"],
-                      [0], [0],
-                      bnlearn_mmhc_linear_dict_scores["lr_e"], bnlearn_rsmax2_linear_dict_scores["lr_e"],
-                      bnlearn_h2pc_linear_dict_scores["lr_e"]], showmeans=True, meanline=True)
-    ax[7, 0].set_title('LR-elasticnet-Linear', fontsize=fs)
-    ax[7, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[7, 1].boxplot([notears_l2_nonlinear_dict_scores["lr_e"], notears_nonlinear_dict_scores["lr_e"],
-                      notears_poisson_nonlinear_dict_scores["lr_e"], bnlearn_nonlinear_dict_scores["lr_e"],
-                      bnlearn_tabu_nonlinear_dict_scores["lr_e"], [0], [0], [0],
-                      bnlearn_mmhc_nonlinear_dict_scores["lr_e"], bnlearn_rsmax2_nonlinear_dict_scores["lr_e"],
-                      bnlearn_h2pc_nonlinear_dict_scores["lr_e"]], showmeans=True, meanline=True)
-    ax[7, 1].set_title('LR-elasticnet-Nonlinear', fontsize=fs)
-    ax[7, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[7, 2].boxplot([notears_l2_sparse_dict_scores["lr_e"], notears_sparse_dict_scores["lr_e"],
-                      notears_poisson_sparse_dict_scores["lr_e"], bnlearn_sparse_dict_scores["lr_e"],
-                      bnlearn_tabu_sparse_dict_scores["lr_e"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["lr_e"],
-                      bnlearn_rsmax2_sparse_dict_scores["lr_e"], bnlearn_h2pc_sparse_dict_scores["lr_e"]], showmeans=True,
-                     meanline=True)
-    ax[7, 2].set_title('LR-elasticnet-Sparse', fontsize=fs)
-    ax[7, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[7, 3].boxplot([notears_l2_dimension_dict_scores["lr_e"], notears_dimension_dict_scores["lr_e"],
-                      notears_poisson_dimension_dict_scores["lr_e"], bnlearn_dimension_dict_scores["lr_e"],
-                      bnlearn_tabu_dimension_dict_scores["lr_e"], [0], [0], [0], bnlearn_mmhc_dimension_dict_scores["lr_e"],
-                      bnlearn_rsmax2_dimension_dict_scores["lr_e"], bnlearn_h2pc_dimension_dict_scores["lr_e"]],
-                     showmeans=True, meanline=True)
-    ax[7, 3].set_title('LR-elasticnet-Dimensional', fontsize=fs)
-    ax[7, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-
-    ax[8, 0].boxplot([notears_l2_linear_dict_scores["nb"], notears_linear_dict_scores["nb"],notears_poisson_linear_dict_scores["nb"], bnlearn_linear_dict_scores["nb"],bnlearn_tabu_linear_dict_scores["nb"], bnlearn_pc_linear_dict_scores["nb"],[0], [0],bnlearn_mmhc_linear_dict_scores["nb"], bnlearn_rsmax2_linear_dict_scores["nb"],bnlearn_h2pc_linear_dict_scores["nb"]], showmeans=True, meanline=True)
-    ax[8, 0].set_title('NB-bernoulli-Linear', fontsize=fs)
-    ax[8, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[8, 1].boxplot([notears_l2_nonlinear_dict_scores["nb"], notears_nonlinear_dict_scores["nb"],notears_poisson_nonlinear_dict_scores["nb"], bnlearn_nonlinear_dict_scores["nb"],bnlearn_tabu_nonlinear_dict_scores["nb"], [0],[0], [0],bnlearn_mmhc_nonlinear_dict_scores["nb"], bnlearn_rsmax2_nonlinear_dict_scores["nb"],bnlearn_h2pc_nonlinear_dict_scores["nb"]], showmeans=True, meanline=True)
-    ax[8, 1].set_title('NB-bernoulli-Nonlinear', fontsize=fs)
-    ax[8, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[8, 2].boxplot([notears_l2_sparse_dict_scores["nb"], notears_sparse_dict_scores["nb"],notears_poisson_sparse_dict_scores["nb"], bnlearn_sparse_dict_scores["nb"],bnlearn_tabu_sparse_dict_scores["nb"], [0],[0], [0],bnlearn_mmhc_sparse_dict_scores["nb"], bnlearn_rsmax2_sparse_dict_scores["nb"],bnlearn_h2pc_sparse_dict_scores["nb"]], showmeans=True, meanline=True)
-    ax[8, 2].set_title('NB-bernoulli-Sparse', fontsize=fs)
-    ax[8, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[8, 3].boxplot([notears_l2_dimension_dict_scores["nb"], notears_dimension_dict_scores["nb"],notears_poisson_dimension_dict_scores["nb"], bnlearn_dimension_dict_scores["nb"],bnlearn_tabu_dimension_dict_scores["nb"], [0],[0], [0],bnlearn_mmhc_dimension_dict_scores["nb"], bnlearn_rsmax2_dimension_dict_scores["nb"],bnlearn_h2pc_dimension_dict_scores["nb"]], showmeans=True, meanline=True)
-    ax[8, 3].set_title('NB-bernoulli-Dimensional', fontsize=fs)
-    ax[8, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[9, 0].boxplot([notears_l2_linear_dict_scores["nb_g"], notears_linear_dict_scores["nb_g"],
-                      notears_poisson_linear_dict_scores["nb_g"], bnlearn_linear_dict_scores["nb_g"],
-                      bnlearn_tabu_linear_dict_scores["nb_g"], bnlearn_pc_linear_dict_scores["nb_g"],
-                      [0], [0],
-                      bnlearn_mmhc_linear_dict_scores["nb_g"], bnlearn_rsmax2_linear_dict_scores["nb_g"],
-                      bnlearn_h2pc_linear_dict_scores["nb_g"]], showmeans=True, meanline=True)
-    ax[9, 0].set_title('NB-gaussian-Linear', fontsize=fs)
-    ax[9, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[9, 1].boxplot([notears_l2_nonlinear_dict_scores["nb_g"], notears_nonlinear_dict_scores["nb_g"],
-                      notears_poisson_nonlinear_dict_scores["nb_g"], bnlearn_nonlinear_dict_scores["nb_g"],
-                      bnlearn_tabu_nonlinear_dict_scores["nb_g"], [0], [0], [0],
-                      bnlearn_mmhc_nonlinear_dict_scores["nb_g"], bnlearn_rsmax2_nonlinear_dict_scores["nb_g"],
-                      bnlearn_h2pc_nonlinear_dict_scores["nb_g"]], showmeans=True, meanline=True)
-    ax[9, 1].set_title('NB-gaussian-Nonlinear', fontsize=fs)
-    ax[9, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[9, 2].boxplot([notears_l2_sparse_dict_scores["nb_g"], notears_sparse_dict_scores["nb_g"],
-                      notears_poisson_sparse_dict_scores["nb_g"], bnlearn_sparse_dict_scores["nb_g"],
-                      bnlearn_tabu_sparse_dict_scores["nb_g"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["nb_g"],
-                      bnlearn_rsmax2_sparse_dict_scores["nb_g"], bnlearn_h2pc_sparse_dict_scores["nb_g"]], showmeans=True,
-                     meanline=True)
-    ax[9, 2].set_title('NB-gaussian-Sparse', fontsize=fs)
-    ax[9, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[9, 3].boxplot([notears_l2_dimension_dict_scores["nb_g"], notears_dimension_dict_scores["nb_g"],
-                      notears_poisson_dimension_dict_scores["nb_g"], bnlearn_dimension_dict_scores["nb_g"],
-                      bnlearn_tabu_dimension_dict_scores["nb_g"], [0], [0], [0], bnlearn_mmhc_dimension_dict_scores["nb_g"],
-                      bnlearn_rsmax2_dimension_dict_scores["nb_g"], bnlearn_h2pc_dimension_dict_scores["nb_g"]],
-                     showmeans=True, meanline=True)
-    ax[9, 3].set_title('NB-gaussian-Dimensional', fontsize=fs)
-    ax[9, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[10, 0].boxplot([notears_l2_linear_dict_scores["nb_m"], notears_linear_dict_scores["nb_m"],
-                      notears_poisson_linear_dict_scores["nb_m"], bnlearn_linear_dict_scores["nb_m"],
-                      bnlearn_tabu_linear_dict_scores["nb_m"], bnlearn_pc_linear_dict_scores["nb_m"],
-                      [0], [0],
-                      bnlearn_mmhc_linear_dict_scores["nb_m"], bnlearn_rsmax2_linear_dict_scores["nb_m"],
-                      bnlearn_h2pc_linear_dict_scores["nb_m"]], showmeans=True, meanline=True)
-    ax[10, 0].set_title('NB-multinomial-Linear', fontsize=fs)
-    ax[10, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[10, 1].boxplot([notears_l2_nonlinear_dict_scores["nb_m"], notears_nonlinear_dict_scores["nb_m"],
-                      notears_poisson_nonlinear_dict_scores["nb_m"], bnlearn_nonlinear_dict_scores["nb_m"],
-                      bnlearn_tabu_nonlinear_dict_scores["nb_m"], [0], [0], [0],
-                      bnlearn_mmhc_nonlinear_dict_scores["nb_m"], bnlearn_rsmax2_nonlinear_dict_scores["nb_m"],
-                      bnlearn_h2pc_nonlinear_dict_scores["nb_m"]], showmeans=True, meanline=True)
-    ax[10, 1].set_title('NB-multinomial-Nonlinear', fontsize=fs)
-    ax[10, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[10, 2].boxplot([notears_l2_sparse_dict_scores["nb_m"], notears_sparse_dict_scores["nb_m"],
-                      notears_poisson_sparse_dict_scores["nb_m"], bnlearn_sparse_dict_scores["nb_m"],
-                      bnlearn_tabu_sparse_dict_scores["nb_m"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["nb_m"],
-                      bnlearn_rsmax2_sparse_dict_scores["nb_m"], bnlearn_h2pc_sparse_dict_scores["nb_m"]],
-                     showmeans=True,
-                     meanline=True)
-    ax[10, 2].set_title('NB-multinomial-Sparse', fontsize=fs)
-    ax[10, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[10, 3].boxplot([notears_l2_dimension_dict_scores["nb_m"], notears_dimension_dict_scores["nb_m"],
-                      notears_poisson_dimension_dict_scores["nb_m"], bnlearn_dimension_dict_scores["nb_m"],
-                      bnlearn_tabu_dimension_dict_scores["nb_m"], [0], [0], [0],
-                      bnlearn_mmhc_dimension_dict_scores["nb_m"],
-                      bnlearn_rsmax2_dimension_dict_scores["nb_m"], bnlearn_h2pc_dimension_dict_scores["nb_m"]],
-                     showmeans=True, meanline=True)
-    ax[10, 3].set_title('NB-multinomial-Dimensional', fontsize=fs)
-    ax[10, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[11, 0].boxplot([notears_l2_linear_dict_scores["nb_c"], notears_linear_dict_scores["nb_c"],
-                      notears_poisson_linear_dict_scores["nb_c"], bnlearn_linear_dict_scores["nb_c"],
-                      bnlearn_tabu_linear_dict_scores["nb_c"], bnlearn_pc_linear_dict_scores["nb_c"],
-                      [0], [0],
-                      bnlearn_mmhc_linear_dict_scores["nb_c"], bnlearn_rsmax2_linear_dict_scores["nb_c"],
-                      bnlearn_h2pc_linear_dict_scores["nb_c"]], showmeans=True, meanline=True)
-    ax[11, 0].set_title('NB-complement-Linear', fontsize=fs)
-    ax[11, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[11, 1].boxplot([notears_l2_nonlinear_dict_scores["nb_c"], notears_nonlinear_dict_scores["nb_c"],
-                      notears_poisson_nonlinear_dict_scores["nb_c"], bnlearn_nonlinear_dict_scores["nb_c"],
-                      bnlearn_tabu_nonlinear_dict_scores["nb_c"], [0], [0], [0],
-                      bnlearn_mmhc_nonlinear_dict_scores["nb_c"], bnlearn_rsmax2_nonlinear_dict_scores["nb_c"],
-                      bnlearn_h2pc_nonlinear_dict_scores["nb_c"]], showmeans=True, meanline=True)
-    ax[11, 1].set_title('NB-complement-Nonlinear', fontsize=fs)
-    ax[11, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[11, 2].boxplot([notears_l2_sparse_dict_scores["nb_c"], notears_sparse_dict_scores["nb_c"],
-                      notears_poisson_sparse_dict_scores["nb_c"], bnlearn_sparse_dict_scores["nb_c"],
-                      bnlearn_tabu_sparse_dict_scores["nb_c"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["nb_c"],
-                      bnlearn_rsmax2_sparse_dict_scores["nb_c"], bnlearn_h2pc_sparse_dict_scores["nb_c"]],
-                     showmeans=True,
-                     meanline=True)
-    ax[11, 2].set_title('NB-complement-Sparse', fontsize=fs)
-    ax[11, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[11, 3].boxplot([notears_l2_dimension_dict_scores["nb_c"], notears_dimension_dict_scores["nb_c"],
-                      notears_poisson_dimension_dict_scores["nb_c"], bnlearn_dimension_dict_scores["nb_c"],
-                      bnlearn_tabu_dimension_dict_scores["nb_c"], [0], [0], [0],
-                      bnlearn_mmhc_dimension_dict_scores["nb_c"],
-                      bnlearn_rsmax2_dimension_dict_scores["nb_c"], bnlearn_h2pc_dimension_dict_scores["nb_c"]],
-                     showmeans=True, meanline=True)
-    ax[11, 3].set_title('NB-complement-Dimensional', fontsize=fs)
-    ax[11, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                        ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                         "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[12, 0].boxplot([notears_l2_linear_dict_scores["svm"], notears_linear_dict_scores["svm"],notears_poisson_linear_dict_scores["svm"], bnlearn_linear_dict_scores["svm"],bnlearn_tabu_linear_dict_scores["svm"], bnlearn_pc_linear_dict_scores["svm"],[0], [0],bnlearn_mmhc_linear_dict_scores["svm"], bnlearn_rsmax2_linear_dict_scores["svm"],bnlearn_h2pc_linear_dict_scores["svm"]], showmeans=True, meanline=True)
-    ax[12, 0].set_title('SVM-sigmoid-Linear', fontsize=fs)
-    ax[12, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[12, 1].boxplot([notears_l2_nonlinear_dict_scores["svm"], notears_nonlinear_dict_scores["svm"],notears_poisson_nonlinear_dict_scores["svm"], bnlearn_nonlinear_dict_scores["svm"],bnlearn_tabu_nonlinear_dict_scores["svm"], [0],[0], [0],bnlearn_mmhc_nonlinear_dict_scores["svm"], bnlearn_rsmax2_nonlinear_dict_scores["svm"],bnlearn_h2pc_nonlinear_dict_scores["svm"]], showmeans=True, meanline=True)
-    ax[12, 1].set_title('SVM-sigmoid-Nonlinear', fontsize=fs)
-    ax[12, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[12, 2].boxplot([notears_l2_sparse_dict_scores["svm"], notears_sparse_dict_scores["svm"],notears_poisson_sparse_dict_scores["svm"], bnlearn_sparse_dict_scores["svm"],bnlearn_tabu_sparse_dict_scores["svm"], [0],[0], [0],bnlearn_mmhc_sparse_dict_scores["svm"], bnlearn_rsmax2_sparse_dict_scores["svm"],bnlearn_h2pc_sparse_dict_scores["svm"]], showmeans=True, meanline=True)
-    ax[12, 2].set_title('SVM-sigmoid-Sparse', fontsize=fs)
-    ax[12, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[12, 3].boxplot([notears_l2_dimension_dict_scores["svm"], notears_dimension_dict_scores["svm"],notears_poisson_dimension_dict_scores["svm"], bnlearn_dimension_dict_scores["svm"],bnlearn_tabu_dimension_dict_scores["svm"], [0],[0], [0],bnlearn_mmhc_dimension_dict_scores["svm"], bnlearn_rsmax2_dimension_dict_scores["svm"],bnlearn_h2pc_dimension_dict_scores["svm"]],  showmeans=True, meanline=True)
-    ax[12, 3].set_title('SVM-sigmoid-Dimensional', fontsize=fs)
-    ax[12, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[13, 0].boxplot([notears_l2_linear_dict_scores["svm_po"], notears_linear_dict_scores["svm_po"],
-                       notears_poisson_linear_dict_scores["svm_po"], bnlearn_linear_dict_scores["svm_po"],
-                       bnlearn_tabu_linear_dict_scores["svm_po"], bnlearn_pc_linear_dict_scores["svm_po"],
-                       [0], [0],
-                       bnlearn_mmhc_linear_dict_scores["svm_po"], bnlearn_rsmax2_linear_dict_scores["svm_po"],
-                       bnlearn_h2pc_linear_dict_scores["svm_po"]], showmeans=True, meanline=True)
-    ax[13, 0].set_title('SVM-polynomial-Linear', fontsize=fs)
-    ax[13, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[13, 1].boxplot([notears_l2_nonlinear_dict_scores["svm_po"], notears_nonlinear_dict_scores["svm_po"],
-                       notears_poisson_nonlinear_dict_scores["svm_po"], bnlearn_nonlinear_dict_scores["svm_po"],
-                       bnlearn_tabu_nonlinear_dict_scores["svm_po"], [0], [0], [0],
-                       bnlearn_mmhc_nonlinear_dict_scores["svm_po"], bnlearn_rsmax2_nonlinear_dict_scores["svm_po"],
-                       bnlearn_h2pc_nonlinear_dict_scores["svm_po"]], showmeans=True, meanline=True)
-    ax[13, 1].set_title('SVM-polynomial-Nonlinear', fontsize=fs)
-    ax[13, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[13, 2].boxplot([notears_l2_sparse_dict_scores["svm_po"], notears_sparse_dict_scores["svm_po"],
-                       notears_poisson_sparse_dict_scores["svm_po"], bnlearn_sparse_dict_scores["svm_po"],
-                       bnlearn_tabu_sparse_dict_scores["svm_po"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["svm_po"],
-                       bnlearn_rsmax2_sparse_dict_scores["svm_po"], bnlearn_h2pc_sparse_dict_scores["svm_po"]],
-                      showmeans=True, meanline=True)
-    ax[13, 2].set_title('SVM-polynomial-Sparse', fontsize=fs)
-    ax[13, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[13, 3].boxplot([notears_l2_dimension_dict_scores["svm_po"], notears_dimension_dict_scores["svm_po"],
-                       notears_poisson_dimension_dict_scores["svm_po"], bnlearn_dimension_dict_scores["svm_po"],
-                       bnlearn_tabu_dimension_dict_scores["svm_po"], [0], [0], [0],
-                       bnlearn_mmhc_dimension_dict_scores["svm_po"], bnlearn_rsmax2_dimension_dict_scores["svm_po"],
-                       bnlearn_h2pc_dimension_dict_scores["svm_po"]], showmeans=True, meanline=True)
-    ax[13, 3].set_title('SVM-polynomial-Dimensional', fontsize=fs)
-    ax[13, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[14, 0].boxplot([notears_l2_linear_dict_scores["svm_r"], notears_linear_dict_scores["svm_r"],
-                       notears_poisson_linear_dict_scores["svm_r"], bnlearn_linear_dict_scores["svm_r"],
-                       bnlearn_tabu_linear_dict_scores["svm_r"], bnlearn_pc_linear_dict_scores["svm_r"],
-                       [0], [0],
-                       bnlearn_mmhc_linear_dict_scores["svm_r"], bnlearn_rsmax2_linear_dict_scores["svm_r"],
-                       bnlearn_h2pc_linear_dict_scores["svm_r"]], showmeans=True, meanline=True)
-    ax[14, 0].set_title('SVM-rbf-Linear', fontsize=fs)
-    ax[14, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[14, 1].boxplot([notears_l2_nonlinear_dict_scores["svm_r"], notears_nonlinear_dict_scores["svm_r"],
-                       notears_poisson_nonlinear_dict_scores["svm_r"], bnlearn_nonlinear_dict_scores["svm_r"],
-                       bnlearn_tabu_nonlinear_dict_scores["svm_r"], [0], [0], [0],
-                       bnlearn_mmhc_nonlinear_dict_scores["svm_r"], bnlearn_rsmax2_nonlinear_dict_scores["svm_r"],
-                       bnlearn_h2pc_nonlinear_dict_scores["svm_r"]], showmeans=True, meanline=True)
-    ax[14, 1].set_title('SVM-rbf-Nonlinear', fontsize=fs)
-    ax[14, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[14, 2].boxplot([notears_l2_sparse_dict_scores["svm_r"], notears_sparse_dict_scores["svm_r"],
-                       notears_poisson_sparse_dict_scores["svm_r"], bnlearn_sparse_dict_scores["svm_r"],
-                       bnlearn_tabu_sparse_dict_scores["svm_r"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["svm_r"],
-                       bnlearn_rsmax2_sparse_dict_scores["svm_r"], bnlearn_h2pc_sparse_dict_scores["svm_r"]],
-                      showmeans=True, meanline=True)
-    ax[14, 2].set_title('SVM-rbf-Sparse', fontsize=fs)
-    ax[14, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[14, 3].boxplot([notears_l2_dimension_dict_scores["svm_r"], notears_dimension_dict_scores["svm_r"],
-                       notears_poisson_dimension_dict_scores["svm_r"], bnlearn_dimension_dict_scores["svm_r"],
-                       bnlearn_tabu_dimension_dict_scores["svm_r"], [0], [0], [0],
-                       bnlearn_mmhc_dimension_dict_scores["svm_r"], bnlearn_rsmax2_dimension_dict_scores["svm_r"],
-                       bnlearn_h2pc_dimension_dict_scores["svm_r"]], showmeans=True, meanline=True)
-    ax[14, 3].set_title('SVM-rbf-Dimensional', fontsize=fs)
-    ax[14, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[15, 0].boxplot([notears_l2_linear_dict_scores["knn"], notears_linear_dict_scores["knn"],notears_poisson_linear_dict_scores["knn"], bnlearn_linear_dict_scores["knn"],bnlearn_tabu_linear_dict_scores["knn"], bnlearn_pc_linear_dict_scores["knn"],[0], [0],bnlearn_mmhc_linear_dict_scores["knn"], bnlearn_rsmax2_linear_dict_scores["knn"],bnlearn_h2pc_linear_dict_scores["knn"]], showmeans=True, meanline=True)
-    ax[15, 0].set_title('KNN-uniform-Linear', fontsize=fs)
-    ax[15, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[15, 1].boxplot([notears_l2_nonlinear_dict_scores["knn"], notears_nonlinear_dict_scores["knn"],notears_poisson_nonlinear_dict_scores["knn"], bnlearn_nonlinear_dict_scores["knn"],bnlearn_tabu_nonlinear_dict_scores["knn"], [0],[0], [0],bnlearn_mmhc_nonlinear_dict_scores["knn"], bnlearn_rsmax2_nonlinear_dict_scores["knn"],bnlearn_h2pc_nonlinear_dict_scores["knn"]],  showmeans=True, meanline=True)
-    ax[15, 1].set_title('KNN-uniform-Nonlinear', fontsize=fs)
-    ax[15, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[15, 2].boxplot([notears_l2_sparse_dict_scores["knn"], notears_sparse_dict_scores["knn"],notears_poisson_sparse_dict_scores["knn"], bnlearn_sparse_dict_scores["knn"],bnlearn_tabu_sparse_dict_scores["knn"], [0],[0], [0],bnlearn_mmhc_sparse_dict_scores["knn"], bnlearn_rsmax2_sparse_dict_scores["knn"],bnlearn_h2pc_sparse_dict_scores["knn"]],  showmeans=True, meanline=True)
-    ax[15, 2].set_title('KNN-uniform-Sparse', fontsize=fs)
-    ax[15, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[15, 3].boxplot([notears_l2_dimension_dict_scores["knn"], notears_dimension_dict_scores["knn"],notears_poisson_dimension_dict_scores["knn"], bnlearn_dimension_dict_scores["knn"],bnlearn_tabu_dimension_dict_scores["knn"], [0],[0], [0],bnlearn_mmhc_dimension_dict_scores["knn"], bnlearn_rsmax2_dimension_dict_scores["knn"],bnlearn_h2pc_dimension_dict_scores["knn"]], showmeans=True, meanline=True)
-    ax[15, 3].set_title('KNN-uniform-Dimensional', fontsize=fs)
-    ax[15, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ["NT_L2", "NT_Log","NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC", "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    ax[16, 0].boxplot([notears_l2_linear_dict_scores["knn_d"], notears_linear_dict_scores["knn_d"],
-                       notears_poisson_linear_dict_scores["knn_d"], bnlearn_linear_dict_scores["knn_d"],
-                       bnlearn_tabu_linear_dict_scores["knn_d"], bnlearn_pc_linear_dict_scores["knn_d"],
-                       [0], [0],
-                       bnlearn_mmhc_linear_dict_scores["knn_d"], bnlearn_rsmax2_linear_dict_scores["knn_d"],
-                       bnlearn_h2pc_linear_dict_scores["knn_d"]], showmeans=True, meanline=True)
-    ax[16, 0].set_title('KNN-distance-Linear', fontsize=fs)
-    ax[16, 0].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[16, 1].boxplot([notears_l2_nonlinear_dict_scores["knn_d"], notears_nonlinear_dict_scores["knn_d"],
-                       notears_poisson_nonlinear_dict_scores["knn_d"], bnlearn_nonlinear_dict_scores["knn_d"],
-                       bnlearn_tabu_nonlinear_dict_scores["knn_d"], [0], [0], [0],
-                       bnlearn_mmhc_nonlinear_dict_scores["knn_d"], bnlearn_rsmax2_nonlinear_dict_scores["knn_d"],
-                       bnlearn_h2pc_nonlinear_dict_scores["knn_d"]], showmeans=True, meanline=True)
-    ax[16, 1].set_title('KNN-distance-Nonlinear', fontsize=fs)
-    ax[16, 1].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[16, 2].boxplot([notears_l2_sparse_dict_scores["knn_d"], notears_sparse_dict_scores["knn_d"],
-                       notears_poisson_sparse_dict_scores["knn_d"], bnlearn_sparse_dict_scores["knn_d"],
-                       bnlearn_tabu_sparse_dict_scores["knn_d"], [0], [0], [0], bnlearn_mmhc_sparse_dict_scores["knn_d"],
-                       bnlearn_rsmax2_sparse_dict_scores["knn_d"], bnlearn_h2pc_sparse_dict_scores["knn_d"]],
-                      showmeans=True, meanline=True)
-    ax[16, 2].set_title('KNN-distance-Sparse', fontsize=fs)
-    ax[16, 2].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-    ax[16, 3].boxplot([notears_l2_dimension_dict_scores["knn_d"], notears_dimension_dict_scores["knn_d"],
-                       notears_poisson_dimension_dict_scores["knn_d"], bnlearn_dimension_dict_scores["knn_d"],
-                       bnlearn_tabu_dimension_dict_scores["knn_d"], [0], [0], [0],
-                       bnlearn_mmhc_dimension_dict_scores["knn_d"], bnlearn_rsmax2_dimension_dict_scores["knn_d"],
-                       bnlearn_h2pc_dimension_dict_scores["knn_d"]], showmeans=True, meanline=True)
-    ax[16, 3].set_title('KNN-distance-Dimensional', fontsize=fs)
-    ax[16, 3].set_xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                         ["NT_L2", "NT_Log", "NT_Poi", "BN_HC", "BN_Tabu", "BN_PC", "BN_GS", "BN_IAMB", "BN_MMHC",
-                          "BN_RSMAX2", "BN_H2PC"], rotation=90)
-
-    #ax.set(ylim=(0,1), yticks=np.arange(0, 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1))
-    fig.tight_layout()
-    plt.savefig('pipeline_summary_benchmark_boxplots.png')
-    plt.show()
-
-
-    # Produce Linear Problem by Library on Problem
+    # Produce Linear Problem by Library on Problem (test set from real world)
     # Group by figure
     labels = ['DT_G', 'DT_E', 'RF_G', 'RF_E', 'LR', 'LR_L1', 'LR_L2', 'LR_E', 'NB_B', 'NB_G', 'NB_M', 'NB_C', 'SVM_S',
               'SVM_P', 'SVM_R', 'KNN_W', 'KNN_D']
@@ -2928,6 +2527,842 @@ def write_real_to_figures():
     #plt.ylim(0.6, 1)
     #plt.tick_params(rotation=45)
     plt.savefig('pipeline_summary_benchmark_for_dimension_by_library_groupbar.png', bbox_inches='tight')
+    plt.show()
+    
+    
+    #--------------
+
+    # Produce Linear Problem by Library on Problem (test set from learned world)
+    # Group by figure
+    labels = ['DT_G', 'DT_E', 'RF_G', 'RF_E', 'LR', 'LR_L1', 'LR_L2', 'LR_E', 'NB_B', 'NB_G', 'NB_M', 'NB_C', 'SVM_S',
+              'SVM_P', 'SVM_R', 'KNN_W', 'KNN_D']
+    bn_means = [bnlearn_linear_dict_scores_simtest["dt"], bnlearn_linear_dict_scores_simtest["dt_e"], bnlearn_linear_dict_scores_simtest["rf"],
+                bnlearn_linear_dict_scores_simtest["rf_e"], bnlearn_linear_dict_scores_simtest["lr"],
+                bnlearn_linear_dict_scores_simtest["lr_l1"], bnlearn_linear_dict_scores_simtest["lr_l2"],
+                bnlearn_linear_dict_scores_simtest["lr_e"], bnlearn_linear_dict_scores_simtest["nb"],
+                bnlearn_linear_dict_scores_simtest["nb_g"], bnlearn_linear_dict_scores_simtest["nb_m"],
+                bnlearn_linear_dict_scores_simtest["nb_c"], bnlearn_linear_dict_scores_simtest["svm"],
+                bnlearn_linear_dict_scores_simtest["svm_po"], bnlearn_linear_dict_scores_simtest["svm_r"],
+                bnlearn_linear_dict_scores_simtest["knn"], bnlearn_linear_dict_scores_simtest["knn_d"]]
+    bn_tabu_means = [bnlearn_tabu_linear_dict_scores_simtest["dt"], bnlearn_tabu_linear_dict_scores_simtest["dt_e"],
+                     bnlearn_tabu_linear_dict_scores_simtest["rf"], bnlearn_tabu_linear_dict_scores_simtest["rf_e"],
+                     bnlearn_tabu_linear_dict_scores_simtest["lr"], bnlearn_tabu_linear_dict_scores_simtest["lr_l1"],
+                     bnlearn_tabu_linear_dict_scores_simtest["lr_l2"], bnlearn_tabu_linear_dict_scores_simtest["lr_e"],
+                     bnlearn_tabu_linear_dict_scores_simtest["nb"], bnlearn_tabu_linear_dict_scores_simtest["nb_g"],
+                     bnlearn_tabu_linear_dict_scores_simtest["nb_m"], bnlearn_tabu_linear_dict_scores_simtest["nb_c"],
+                     bnlearn_tabu_linear_dict_scores_simtest["svm"], bnlearn_tabu_linear_dict_scores_simtest["svm_po"],
+                     bnlearn_tabu_linear_dict_scores_simtest["svm_r"], bnlearn_tabu_linear_dict_scores_simtest["knn"],
+                     bnlearn_tabu_linear_dict_scores_simtest["knn_d"]]
+    bn_pc_means = [bnlearn_pc_linear_dict_scores_simtest["dt"], bnlearn_pc_linear_dict_scores_simtest["dt_e"],
+                   bnlearn_pc_linear_dict_scores_simtest["rf"], bnlearn_pc_linear_dict_scores_simtest["rf_e"],
+                   bnlearn_pc_linear_dict_scores_simtest["lr"], bnlearn_pc_linear_dict_scores_simtest["lr_l1"],
+                   bnlearn_pc_linear_dict_scores_simtest["lr_l2"], bnlearn_pc_linear_dict_scores_simtest["lr_e"],
+                   bnlearn_pc_linear_dict_scores_simtest["nb"], bnlearn_pc_linear_dict_scores_simtest["nb_g"],
+                   bnlearn_pc_linear_dict_scores_simtest["nb_m"], bnlearn_pc_linear_dict_scores_simtest["nb_c"],
+                   bnlearn_pc_linear_dict_scores_simtest["svm"], bnlearn_pc_linear_dict_scores_simtest["svm_po"],
+                   bnlearn_pc_linear_dict_scores_simtest["svm_r"], bnlearn_pc_linear_dict_scores_simtest["knn"],
+                   bnlearn_pc_linear_dict_scores_simtest["knn_d"]]
+    bn_mmhc_means = [bnlearn_mmhc_linear_dict_scores_simtest["dt"], bnlearn_mmhc_linear_dict_scores_simtest["dt_e"],
+                     bnlearn_mmhc_linear_dict_scores_simtest["rf"], bnlearn_mmhc_linear_dict_scores_simtest["rf_e"],
+                     bnlearn_mmhc_linear_dict_scores_simtest["lr"], bnlearn_mmhc_linear_dict_scores_simtest["lr_l1"],
+                     bnlearn_mmhc_linear_dict_scores_simtest["lr_l2"], bnlearn_mmhc_linear_dict_scores_simtest["lr_e"],
+                     bnlearn_mmhc_linear_dict_scores_simtest["nb"], bnlearn_mmhc_linear_dict_scores_simtest["nb_g"],
+                     bnlearn_mmhc_linear_dict_scores_simtest["nb_m"], bnlearn_mmhc_linear_dict_scores_simtest["nb_c"],
+                     bnlearn_mmhc_linear_dict_scores_simtest["svm"], bnlearn_mmhc_linear_dict_scores_simtest["svm_po"],
+                     bnlearn_mmhc_linear_dict_scores_simtest["svm_r"], bnlearn_mmhc_linear_dict_scores_simtest["knn"],
+                     bnlearn_mmhc_linear_dict_scores_simtest["knn_d"]]
+    bn_rsmax2_means = [bnlearn_rsmax2_linear_dict_scores_simtest["dt"], bnlearn_rsmax2_linear_dict_scores_simtest["dt_e"],
+                       bnlearn_rsmax2_linear_dict_scores_simtest["rf"], bnlearn_rsmax2_linear_dict_scores_simtest["rf_e"],
+                       bnlearn_rsmax2_linear_dict_scores_simtest["lr"], bnlearn_rsmax2_linear_dict_scores_simtest["lr_l1"],
+                       bnlearn_rsmax2_linear_dict_scores_simtest["lr_l2"], bnlearn_rsmax2_linear_dict_scores_simtest["lr_e"],
+                       bnlearn_rsmax2_linear_dict_scores_simtest["nb"], bnlearn_rsmax2_linear_dict_scores_simtest["nb_g"],
+                       bnlearn_rsmax2_linear_dict_scores_simtest["nb_m"], bnlearn_rsmax2_linear_dict_scores_simtest["nb_c"],
+                       bnlearn_rsmax2_linear_dict_scores_simtest["svm"], bnlearn_rsmax2_linear_dict_scores_simtest["svm_po"],
+                       bnlearn_rsmax2_linear_dict_scores_simtest["svm_r"], bnlearn_rsmax2_linear_dict_scores_simtest["knn"],
+                       bnlearn_rsmax2_linear_dict_scores_simtest["knn_d"]]
+    bn_h2pc_means = [bnlearn_h2pc_linear_dict_scores_simtest["dt"], bnlearn_h2pc_linear_dict_scores_simtest["dt_e"],
+                     bnlearn_h2pc_linear_dict_scores_simtest["rf"], bnlearn_h2pc_linear_dict_scores_simtest["rf_e"],
+                     bnlearn_h2pc_linear_dict_scores_simtest["lr"], bnlearn_h2pc_linear_dict_scores_simtest["lr_l1"],
+                     bnlearn_h2pc_linear_dict_scores_simtest["lr_l2"], bnlearn_h2pc_linear_dict_scores_simtest["lr_e"],
+                     bnlearn_h2pc_linear_dict_scores_simtest["nb"], bnlearn_h2pc_linear_dict_scores_simtest["nb_g"],
+                     bnlearn_h2pc_linear_dict_scores_simtest["nb_m"], bnlearn_h2pc_linear_dict_scores_simtest["nb_c"],
+                     bnlearn_h2pc_linear_dict_scores_simtest["svm"], bnlearn_h2pc_linear_dict_scores_simtest["svm_po"],
+                     bnlearn_h2pc_linear_dict_scores_simtest["svm_r"], bnlearn_h2pc_linear_dict_scores_simtest["knn"],
+                     bnlearn_h2pc_linear_dict_scores_simtest["knn_d"]]
+
+    nt_means = [notears_linear_dict_scores_simtest["dt"], notears_linear_dict_scores_simtest["dt_e"], notears_linear_dict_scores_simtest["rf"],
+                notears_linear_dict_scores_simtest["rf_e"], notears_linear_dict_scores_simtest["lr"],
+                notears_linear_dict_scores_simtest["lr_l1"], notears_linear_dict_scores_simtest["lr_l2"],
+                notears_linear_dict_scores_simtest["lr_e"], notears_linear_dict_scores_simtest["nb"],
+                notears_linear_dict_scores_simtest["nb_g"], notears_linear_dict_scores_simtest["nb_m"],
+                notears_linear_dict_scores_simtest["nb_c"], notears_linear_dict_scores_simtest["svm"],
+                notears_linear_dict_scores_simtest["svm_po"], notears_linear_dict_scores_simtest["svm_r"],
+                notears_linear_dict_scores_simtest["knn"], notears_linear_dict_scores_simtest["knn_d"]]
+    nt_l2_means = [notears_l2_linear_dict_scores_simtest["dt"], notears_l2_linear_dict_scores_simtest["dt_e"],
+                   notears_l2_linear_dict_scores_simtest["rf"], notears_l2_linear_dict_scores_simtest["rf_e"],
+                   notears_l2_linear_dict_scores_simtest["lr"], notears_l2_linear_dict_scores_simtest["lr_l1"],
+                   notears_l2_linear_dict_scores_simtest["lr_l2"], notears_l2_linear_dict_scores_simtest["lr_e"],
+                   notears_l2_linear_dict_scores_simtest["nb"], notears_l2_linear_dict_scores_simtest["nb_g"],
+                   notears_l2_linear_dict_scores_simtest["nb_m"], notears_l2_linear_dict_scores_simtest["nb_c"],
+                   notears_l2_linear_dict_scores_simtest["svm"], notears_l2_linear_dict_scores_simtest["svm_po"],
+                   notears_l2_linear_dict_scores_simtest["svm_r"], notears_l2_linear_dict_scores_simtest["knn"],
+                   notears_l2_linear_dict_scores_simtest["knn_d"]]
+    nt_p_means = [notears_poisson_linear_dict_scores_simtest["dt"], notears_poisson_linear_dict_scores_simtest["dt_e"],
+                  notears_poisson_linear_dict_scores_simtest["rf"], notears_poisson_linear_dict_scores_simtest["rf_e"],
+                  notears_poisson_linear_dict_scores_simtest["lr"], notears_poisson_linear_dict_scores_simtest["lr_l1"],
+                  notears_poisson_linear_dict_scores_simtest["lr_l2"], notears_poisson_linear_dict_scores_simtest["lr_e"],
+                  notears_poisson_linear_dict_scores_simtest["nb"], notears_poisson_linear_dict_scores_simtest["nb_g"],
+                  notears_poisson_linear_dict_scores_simtest["nb_m"], notears_poisson_linear_dict_scores_simtest["nb_c"],
+                  notears_poisson_linear_dict_scores_simtest["svm"], notears_poisson_linear_dict_scores_simtest["svm_po"],
+                  notears_poisson_linear_dict_scores_simtest["svm_r"], notears_poisson_linear_dict_scores_simtest["knn"],
+                  notears_poisson_linear_dict_scores_simtest["knn_d"]]
+
+    p_means = [pomegranate_exact_linear_dict_scores_simtest["dt"], pomegranate_exact_linear_dict_scores_simtest["dt_e"],
+               pomegranate_exact_linear_dict_scores_simtest["rf"], pomegranate_exact_linear_dict_scores_simtest["rf_e"],
+               pomegranate_exact_linear_dict_scores_simtest["lr"], pomegranate_exact_linear_dict_scores_simtest["lr_l1"],
+               pomegranate_exact_linear_dict_scores_simtest["lr_l2"], pomegranate_exact_linear_dict_scores_simtest["lr_e"],
+               pomegranate_exact_linear_dict_scores_simtest["nb"], pomegranate_exact_linear_dict_scores_simtest["nb_g"],
+               pomegranate_exact_linear_dict_scores_simtest["nb_m"], pomegranate_exact_linear_dict_scores_simtest["nb_c"],
+               pomegranate_exact_linear_dict_scores_simtest["svm"], pomegranate_exact_linear_dict_scores_simtest["svm_po"],
+               pomegranate_exact_linear_dict_scores_simtest["svm_r"], pomegranate_exact_linear_dict_scores_simtest["knn"],
+               pomegranate_exact_linear_dict_scores_simtest["knn_d"]]
+    p_g_means = [pomegranate_greedy_linear_dict_scores_simtest["dt"],
+                 pomegranate_greedy_linear_dict_scores_simtest["dt_e"],
+                 pomegranate_greedy_linear_dict_scores_simtest["rf"],
+                 pomegranate_greedy_linear_dict_scores_simtest["rf_e"],
+                 pomegranate_greedy_linear_dict_scores_simtest["lr"],
+                 pomegranate_greedy_linear_dict_scores_simtest["lr_l1"],
+                 pomegranate_greedy_linear_dict_scores_simtest["lr_l2"],
+                 pomegranate_greedy_linear_dict_scores_simtest["lr_e"],
+                 pomegranate_greedy_linear_dict_scores_simtest["nb"],
+                 pomegranate_greedy_linear_dict_scores_simtest["nb_g"],
+                 pomegranate_greedy_linear_dict_scores_simtest["nb_m"],
+                 pomegranate_greedy_linear_dict_scores_simtest["nb_c"],
+                 pomegranate_greedy_linear_dict_scores_simtest["svm"],
+                 pomegranate_greedy_linear_dict_scores_simtest["svm_po"],
+                 pomegranate_greedy_linear_dict_scores_simtest["svm_r"],
+                 pomegranate_greedy_linear_dict_scores_simtest["knn"],
+                 pomegranate_greedy_linear_dict_scores_simtest["knn_d"]]
+
+    pgmpy_tree_means = [pgmpy_tree_linear_dict_scores_simtest["dt"],
+                        pgmpy_tree_linear_dict_scores_simtest["dt_e"],
+                        pgmpy_tree_linear_dict_scores_simtest["rf"],
+                        pgmpy_tree_linear_dict_scores_simtest["rf_e"],
+                        pgmpy_tree_linear_dict_scores_simtest["lr"],
+                        pgmpy_tree_linear_dict_scores_simtest["lr_l1"],
+                        pgmpy_tree_linear_dict_scores_simtest["lr_l2"],
+                        pgmpy_tree_linear_dict_scores_simtest["lr_e"],
+                        pgmpy_tree_linear_dict_scores_simtest["nb"],
+                        pgmpy_tree_linear_dict_scores_simtest["nb_g"],
+                        pgmpy_tree_linear_dict_scores_simtest["nb_m"],
+                        pgmpy_tree_linear_dict_scores_simtest["nb_c"],
+                        pgmpy_tree_linear_dict_scores_simtest["svm"],
+                        pgmpy_tree_linear_dict_scores_simtest["svm_po"],
+                        pgmpy_tree_linear_dict_scores_simtest["svm_r"],
+                        pgmpy_tree_linear_dict_scores_simtest["knn"],
+                        pgmpy_tree_linear_dict_scores_simtest["knn_d"]]
+    pgmpy_hc_means = [pgmpy_hc_linear_dict_scores_simtest["dt"],
+                      pgmpy_hc_linear_dict_scores_simtest["dt_e"],
+                      pgmpy_hc_linear_dict_scores_simtest["rf"],
+                      pgmpy_hc_linear_dict_scores_simtest["rf_e"],
+                      pgmpy_hc_linear_dict_scores_simtest["lr"],
+                      pgmpy_hc_linear_dict_scores_simtest["lr_l1"],
+                      pgmpy_hc_linear_dict_scores_simtest["lr_l2"],
+                      pgmpy_hc_linear_dict_scores_simtest["lr_e"],
+                      pgmpy_hc_linear_dict_scores_simtest["nb"],
+                      pgmpy_hc_linear_dict_scores_simtest["nb_g"],
+                      pgmpy_hc_linear_dict_scores_simtest["nb_m"],
+                      pgmpy_hc_linear_dict_scores_simtest["nb_c"],
+                      pgmpy_hc_linear_dict_scores_simtest["svm"],
+                      pgmpy_hc_linear_dict_scores_simtest["svm_po"],
+                      pgmpy_hc_linear_dict_scores_simtest["svm_r"],
+                      pgmpy_hc_linear_dict_scores_simtest["knn"],
+                      pgmpy_hc_linear_dict_scores_simtest["knn_d"]]
+    pgmpy_mmhc_means = [pgmpy_mmhc_linear_dict_scores_simtest["dt"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["dt_e"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["rf"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["rf_e"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["lr"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["lr_l1"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["lr_l2"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["lr_e"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["nb"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["nb_g"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["nb_m"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["nb_c"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["svm"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["svm_po"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["svm_r"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["knn"],
+                        pgmpy_mmhc_linear_dict_scores_simtest["knn_d"]]
+
+    plt.rcParams["figure.figsize"] = [18, 18]
+    plt.rcParams["figure.autolayout"] = True
+
+    x_axis = np.arange(len(labels))
+    w = 0.05  # the width of the bars
+
+    plt.bar(x_axis + w, bn_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, nt_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_pc_means, width=0.05, label="BN_LEARN (PC)", color="royalblue")
+    plt.bar(x_axis + w * 4, bn_mmhc_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 5, bn_rsmax2_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 6, bn_h2pc_means, width=0.05, label="BN_LEARN (H2PC)", color="navy")
+    plt.bar(x_axis + w * 7, nt_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 8, nt_l2_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 9, nt_p_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 10, p_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 11, p_g_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 12, pgmpy_mmhc_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 13, pgmpy_hc_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 14, pgmpy_tree_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.style.use("fivethirtyeight")
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Linear Problem - Performance by library on ML technique')
+    # plt.ylim(0.6, 1)
+    # plt.tick_params(rotation=45)
+    plt.savefig('pipeline_summary_benchmark_for_linear_by_library_groupbar_simtest.png', bbox_inches='tight')
+    plt.show()
+
+    # Produce Non-Linear Problem by Library on Problem
+    # Group by figure
+    labels = ['DT_G', 'DT_E', 'RF_G', 'RF_E', 'LR', 'LR_L1', 'LR_L2', 'LR_E', 'NB_B', 'NB_G', 'NB_M', 'NB_C', 'SVM_S',
+              'SVM_P', 'SVM_R', 'KNN_W', 'KNN_D']
+    bn_non_means = [bnlearn_nonlinear_dict_scores_simtest["dt"], bnlearn_nonlinear_dict_scores_simtest["dt_e"],
+                    bnlearn_nonlinear_dict_scores_simtest["rf"], bnlearn_nonlinear_dict_scores_simtest["rf_e"],
+                    bnlearn_nonlinear_dict_scores_simtest["lr"], bnlearn_nonlinear_dict_scores_simtest["lr_l1"],
+                    bnlearn_nonlinear_dict_scores_simtest["lr_l2"], bnlearn_nonlinear_dict_scores_simtest["lr_e"],
+                    bnlearn_nonlinear_dict_scores_simtest["nb"], bnlearn_nonlinear_dict_scores_simtest["nb_g"],
+                    bnlearn_nonlinear_dict_scores_simtest["nb_m"], bnlearn_nonlinear_dict_scores_simtest["nb_c"],
+                    bnlearn_nonlinear_dict_scores_simtest["svm"], bnlearn_nonlinear_dict_scores_simtest["svm_po"],
+                    bnlearn_nonlinear_dict_scores_simtest["svm_r"], bnlearn_nonlinear_dict_scores_simtest["knn"],
+                    bnlearn_nonlinear_dict_scores_simtest["knn_d"]]
+    bn_tabu_non_means = [bnlearn_tabu_nonlinear_dict_scores_simtest["dt"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["dt_e"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["rf"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["rf_e"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["lr"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["lr_l1"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["lr_l2"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["lr_e"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["nb"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["nb_g"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["nb_m"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["nb_c"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["svm"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["svm_po"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["svm_r"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["knn"],
+                         bnlearn_tabu_nonlinear_dict_scores_simtest["knn_d"]]
+    bn_mmhc_non_means = [bnlearn_mmhc_nonlinear_dict_scores_simtest["dt"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["dt_e"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["rf"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["rf_e"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["lr"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["lr_l1"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["lr_l2"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["lr_e"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["nb"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["nb_g"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["nb_m"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["nb_c"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["svm"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["svm_po"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["svm_r"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["knn"],
+                         bnlearn_mmhc_nonlinear_dict_scores_simtest["knn_d"]]
+    bn_rsmax2_non_means = [bnlearn_rsmax2_nonlinear_dict_scores_simtest["dt"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["dt_e"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["rf"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["rf_e"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["lr"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["lr_l1"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["lr_l2"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["lr_e"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["nb"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["nb_g"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["nb_m"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["nb_c"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["svm"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["svm_po"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["svm_r"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["knn"],
+                           bnlearn_rsmax2_nonlinear_dict_scores_simtest["knn_d"]]
+    bn_h2pc_non_means = [bnlearn_h2pc_nonlinear_dict_scores_simtest["dt"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["dt_e"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["rf"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["rf_e"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["lr"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["lr_l1"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["lr_l2"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["lr_e"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["nb"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["nb_g"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["nb_m"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["nb_c"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["svm"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["svm_po"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["svm_r"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["knn"],
+                         bnlearn_h2pc_nonlinear_dict_scores_simtest["knn_d"]]
+
+    nt_non_means = [notears_nonlinear_dict_scores_simtest["dt"], notears_nonlinear_dict_scores_simtest["dt_e"],
+                    notears_nonlinear_dict_scores_simtest["rf"], notears_nonlinear_dict_scores_simtest["rf_e"],
+                    notears_nonlinear_dict_scores_simtest["lr"], notears_nonlinear_dict_scores_simtest["lr_l1"],
+                    notears_nonlinear_dict_scores_simtest["lr_l2"], notears_nonlinear_dict_scores_simtest["lr_e"],
+                    notears_nonlinear_dict_scores_simtest["nb"], notears_nonlinear_dict_scores_simtest["nb_g"],
+                    notears_nonlinear_dict_scores_simtest["nb_m"], notears_nonlinear_dict_scores_simtest["nb_c"],
+                    notears_nonlinear_dict_scores_simtest["svm"], notears_nonlinear_dict_scores_simtest["svm_po"],
+                    notears_nonlinear_dict_scores_simtest["svm_r"], notears_nonlinear_dict_scores_simtest["knn"],
+                    notears_nonlinear_dict_scores_simtest["knn_d"]]
+    nt_l2_non_means = [notears_l2_nonlinear_dict_scores_simtest["dt"],
+                       notears_l2_nonlinear_dict_scores_simtest["dt_e"],
+                       notears_l2_nonlinear_dict_scores_simtest["rf"],
+                       notears_l2_nonlinear_dict_scores_simtest["rf_e"],
+                       notears_l2_nonlinear_dict_scores_simtest["lr"],
+                       notears_l2_nonlinear_dict_scores_simtest["lr_l1"],
+                       notears_l2_nonlinear_dict_scores_simtest["lr_l2"],
+                       notears_l2_nonlinear_dict_scores_simtest["lr_e"],
+                       notears_l2_nonlinear_dict_scores_simtest["nb"],
+                       notears_l2_nonlinear_dict_scores_simtest["nb_g"],
+                       notears_l2_nonlinear_dict_scores_simtest["nb_m"],
+                       notears_l2_nonlinear_dict_scores_simtest["nb_c"],
+                       notears_l2_nonlinear_dict_scores_simtest["svm"],
+                       notears_l2_nonlinear_dict_scores_simtest["svm_po"],
+                       notears_l2_nonlinear_dict_scores_simtest["svm_r"],
+                       notears_l2_nonlinear_dict_scores_simtest["knn"],
+                       notears_l2_nonlinear_dict_scores_simtest["knn_d"]]
+    nt_p_non_means = [notears_poisson_nonlinear_dict_scores_simtest["dt"],
+                      notears_poisson_nonlinear_dict_scores_simtest["dt_e"],
+                      notears_poisson_nonlinear_dict_scores_simtest["rf"],
+                      notears_poisson_nonlinear_dict_scores_simtest["rf_e"],
+                      notears_poisson_nonlinear_dict_scores_simtest["lr"],
+                      notears_poisson_nonlinear_dict_scores_simtest["lr_l1"],
+                      notears_poisson_nonlinear_dict_scores_simtest["lr_l2"],
+                      notears_poisson_nonlinear_dict_scores_simtest["lr_e"],
+                      notears_poisson_nonlinear_dict_scores_simtest["nb"],
+                      notears_poisson_nonlinear_dict_scores_simtest["nb_g"],
+                      notears_poisson_nonlinear_dict_scores_simtest["nb_m"],
+                      notears_poisson_nonlinear_dict_scores_simtest["nb_c"],
+                      notears_poisson_nonlinear_dict_scores_simtest["svm"],
+                      notears_poisson_nonlinear_dict_scores_simtest["svm_po"],
+                      notears_poisson_nonlinear_dict_scores_simtest["svm_r"],
+                      notears_poisson_nonlinear_dict_scores_simtest["knn"],
+                      notears_poisson_nonlinear_dict_scores_simtest["knn_d"]]
+
+    p_non_means = [pomegranate_exact_nonlinear_dict_scores_simtest["dt"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["dt_e"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["rf"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["rf_e"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["lr"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["lr_l1"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["lr_l2"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["lr_e"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["nb"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["nb_g"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["nb_m"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["nb_c"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["svm"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["svm_po"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["svm_r"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["knn"],
+                   pomegranate_exact_nonlinear_dict_scores_simtest["knn_d"]]
+    p_g_non_means = [pomegranate_greedy_nonlinear_dict_scores_simtest["dt"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["dt_e"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["rf"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["rf_e"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["lr"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["lr_l1"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["lr_l2"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["lr_e"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["nb"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["nb_g"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["nb_m"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["nb_c"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["svm"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["svm_po"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["svm_r"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["knn"],
+                     pomegranate_greedy_nonlinear_dict_scores_simtest["knn_d"]]
+
+    pgmpy_tree_non_means = [pgmpy_tree_nonlinear_dict_scores_simtest["dt"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["dt_e"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["rf"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["rf_e"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["lr"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["lr_l1"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["lr_l2"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["lr_e"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["nb"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["nb_g"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["nb_m"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["nb_c"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["svm"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["svm_po"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["svm_r"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["knn"],
+                            pgmpy_tree_nonlinear_dict_scores_simtest["knn_d"]]
+    pgmpy_hc_non_means = [pgmpy_hc_nonlinear_dict_scores_simtest["dt"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["dt_e"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["rf"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["rf_e"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["lr"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["lr_l1"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["lr_l2"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["lr_e"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["nb"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["nb_g"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["nb_m"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["nb_c"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["svm"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["svm_po"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["svm_r"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["knn"],
+                          pgmpy_hc_nonlinear_dict_scores_simtest["knn_d"]]
+    pgmpy_mmhc_non_means = [pgmpy_mmhc_nonlinear_dict_scores_simtest["dt"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["dt_e"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["rf"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["rf_e"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["lr"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["lr_l1"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["lr_l2"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["lr_e"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["nb"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["nb_g"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["nb_m"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["nb_c"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["svm"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["svm_po"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["svm_r"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["knn"],
+                            pgmpy_mmhc_nonlinear_dict_scores_simtest["knn_d"]]
+
+    plt.rcParams["figure.figsize"] = [18, 18]
+    plt.rcParams["figure.autolayout"] = True
+
+    x_axis = np.arange(len(labels))
+    w = 0.05  # the width of the bars
+
+    plt.bar(x_axis + w, bn_non_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, nt_non_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_non_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_non_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, bn_h2pc_non_means, width=0.05, label="BN_LEARN (H2PC)", color="navy")
+    plt.bar(x_axis + w * 6, nt_non_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 7, nt_l2_non_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 8, nt_p_non_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 9, p_non_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 10, p_g_non_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 11, pgmpy_mmhc_non_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 12, pgmpy_hc_non_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 13, pgmpy_tree_non_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.style.use("fivethirtyeight")
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Non-Linear Problem - Performance by library on ML technique')
+    # plt.ylim(0.6, 1)
+    # plt.tick_params(rotation=45)
+    plt.savefig('pipeline_summary_benchmark_for_nonlinear_by_library_groupbar_simtest.png', bbox_inches='tight')
+    plt.show()
+
+    # Produce Sparse Problem by Library on Problem
+    # Group by figure
+    labels = ['DT_G', 'DT_E', 'RF_G', 'RF_E', 'LR', 'LR_L1', 'LR_L2', 'LR_E', 'NB_B', 'NB_G', 'NB_M', 'NB_C', 'SVM_S',
+              'SVM_P', 'SVM_R', 'KNN_W', 'KNN_D']
+    bn_sparse_means = [bnlearn_sparse_dict_scores_simtest["dt"], bnlearn_sparse_dict_scores_simtest["dt_e"],
+                       bnlearn_sparse_dict_scores_simtest["rf"], bnlearn_sparse_dict_scores_simtest["rf_e"],
+                       bnlearn_sparse_dict_scores_simtest["lr"], bnlearn_sparse_dict_scores_simtest["lr_l1"],
+                       bnlearn_sparse_dict_scores_simtest["lr_l2"], bnlearn_sparse_dict_scores_simtest["lr_e"],
+                       bnlearn_sparse_dict_scores_simtest["nb"], bnlearn_sparse_dict_scores_simtest["nb_g"],
+                       bnlearn_sparse_dict_scores_simtest["nb_m"], bnlearn_sparse_dict_scores_simtest["nb_c"],
+                       bnlearn_sparse_dict_scores_simtest["svm"], bnlearn_sparse_dict_scores_simtest["svm_po"],
+                       bnlearn_sparse_dict_scores_simtest["svm_r"], bnlearn_sparse_dict_scores_simtest["knn"],
+                       bnlearn_sparse_dict_scores_simtest["knn_d"]]
+    bn_tabu_sparse_means = [bnlearn_tabu_sparse_dict_scores_simtest["dt"], bnlearn_tabu_sparse_dict_scores_simtest["dt_e"],
+                            bnlearn_tabu_sparse_dict_scores_simtest["rf"], bnlearn_tabu_sparse_dict_scores_simtest["rf_e"],
+                            bnlearn_tabu_sparse_dict_scores_simtest["lr"], bnlearn_tabu_sparse_dict_scores_simtest["lr_l1"],
+                            bnlearn_tabu_sparse_dict_scores_simtest["lr_l2"], bnlearn_tabu_sparse_dict_scores_simtest["lr_e"],
+                            bnlearn_tabu_sparse_dict_scores_simtest["nb"], bnlearn_tabu_sparse_dict_scores_simtest["nb_g"],
+                            bnlearn_tabu_sparse_dict_scores_simtest["nb_m"], bnlearn_tabu_sparse_dict_scores_simtest["nb_c"],
+                            bnlearn_tabu_sparse_dict_scores_simtest["svm"], bnlearn_tabu_sparse_dict_scores_simtest["svm_po"],
+                            bnlearn_tabu_sparse_dict_scores_simtest["svm_r"], bnlearn_tabu_sparse_dict_scores_simtest["knn"],
+                            bnlearn_tabu_sparse_dict_scores_simtest["knn_d"]]
+    bn_mmhc_sparse_means = [bnlearn_mmhc_sparse_dict_scores_simtest["dt"], bnlearn_mmhc_sparse_dict_scores_simtest["dt_e"],
+                            bnlearn_mmhc_sparse_dict_scores_simtest["rf"], bnlearn_mmhc_sparse_dict_scores_simtest["rf_e"],
+                            bnlearn_mmhc_sparse_dict_scores_simtest["lr"], bnlearn_mmhc_sparse_dict_scores_simtest["lr_l1"],
+                            bnlearn_mmhc_sparse_dict_scores_simtest["lr_l2"], bnlearn_mmhc_sparse_dict_scores_simtest["lr_e"],
+                            bnlearn_mmhc_sparse_dict_scores_simtest["nb"], bnlearn_mmhc_sparse_dict_scores_simtest["nb_g"],
+                            bnlearn_mmhc_sparse_dict_scores_simtest["nb_m"], bnlearn_mmhc_sparse_dict_scores_simtest["nb_c"],
+                            bnlearn_mmhc_sparse_dict_scores_simtest["svm"], bnlearn_mmhc_sparse_dict_scores_simtest["svm_po"],
+                            bnlearn_mmhc_sparse_dict_scores_simtest["svm_r"], bnlearn_mmhc_sparse_dict_scores_simtest["knn"],
+                            bnlearn_mmhc_sparse_dict_scores_simtest["knn_d"]]
+    bn_rsmax2_sparse_means = [bnlearn_rsmax2_sparse_dict_scores_simtest["dt"], bnlearn_rsmax2_sparse_dict_scores_simtest["dt_e"],
+                              bnlearn_rsmax2_sparse_dict_scores_simtest["rf"], bnlearn_rsmax2_sparse_dict_scores_simtest["rf_e"],
+                              bnlearn_rsmax2_sparse_dict_scores_simtest["lr"], bnlearn_rsmax2_sparse_dict_scores_simtest["lr_l1"],
+                              bnlearn_rsmax2_sparse_dict_scores_simtest["lr_l2"], bnlearn_rsmax2_sparse_dict_scores_simtest["lr_e"],
+                              bnlearn_rsmax2_sparse_dict_scores_simtest["nb"], bnlearn_rsmax2_sparse_dict_scores_simtest["nb_g"],
+                              bnlearn_rsmax2_sparse_dict_scores_simtest["nb_m"], bnlearn_rsmax2_sparse_dict_scores_simtest["nb_c"],
+                              bnlearn_rsmax2_sparse_dict_scores_simtest["svm"], bnlearn_rsmax2_sparse_dict_scores_simtest["svm_po"],
+                              bnlearn_rsmax2_sparse_dict_scores_simtest["svm_r"], bnlearn_rsmax2_sparse_dict_scores_simtest["knn"],
+                              bnlearn_rsmax2_sparse_dict_scores_simtest["knn_d"]]
+    bn_h2pc_sparse_means = [bnlearn_h2pc_sparse_dict_scores_simtest["dt"], bnlearn_h2pc_sparse_dict_scores_simtest["dt_e"],
+                            bnlearn_h2pc_sparse_dict_scores_simtest["rf"], bnlearn_h2pc_sparse_dict_scores_simtest["rf_e"],
+                            bnlearn_h2pc_sparse_dict_scores_simtest["lr"], bnlearn_h2pc_sparse_dict_scores_simtest["lr_l1"],
+                            bnlearn_h2pc_sparse_dict_scores_simtest["lr_l2"], bnlearn_h2pc_sparse_dict_scores_simtest["lr_e"],
+                            bnlearn_h2pc_sparse_dict_scores_simtest["nb"], bnlearn_h2pc_sparse_dict_scores_simtest["nb_g"],
+                            bnlearn_h2pc_sparse_dict_scores_simtest["nb_m"], bnlearn_h2pc_sparse_dict_scores_simtest["nb_c"],
+                            bnlearn_h2pc_sparse_dict_scores_simtest["svm"], bnlearn_h2pc_sparse_dict_scores_simtest["svm_po"],
+                            bnlearn_h2pc_sparse_dict_scores_simtest["svm_r"], bnlearn_h2pc_sparse_dict_scores_simtest["knn"],
+                            bnlearn_h2pc_sparse_dict_scores_simtest["knn_d"]]
+
+    nt_sparse_means = [notears_sparse_dict_scores_simtest["dt"], notears_sparse_dict_scores_simtest["dt_e"],
+                       notears_sparse_dict_scores_simtest["rf"], notears_sparse_dict_scores_simtest["rf_e"],
+                       notears_sparse_dict_scores_simtest["lr"], notears_sparse_dict_scores_simtest["lr_l1"],
+                       notears_sparse_dict_scores_simtest["lr_l2"], notears_sparse_dict_scores_simtest["lr_e"],
+                       notears_sparse_dict_scores_simtest["nb"], notears_sparse_dict_scores_simtest["nb_g"],
+                       notears_sparse_dict_scores_simtest["nb_m"], notears_sparse_dict_scores_simtest["nb_c"],
+                       notears_sparse_dict_scores_simtest["svm"], notears_sparse_dict_scores_simtest["svm_po"],
+                       notears_sparse_dict_scores_simtest["svm_r"], notears_sparse_dict_scores_simtest["knn"],
+                       notears_sparse_dict_scores_simtest["knn_d"]]
+    nt_l2_sparse_means = [notears_l2_sparse_dict_scores_simtest["dt"], notears_l2_sparse_dict_scores_simtest["dt_e"],
+                          notears_l2_sparse_dict_scores_simtest["rf"], notears_l2_sparse_dict_scores_simtest["rf_e"],
+                          notears_l2_sparse_dict_scores_simtest["lr"], notears_l2_sparse_dict_scores_simtest["lr_l1"],
+                          notears_l2_sparse_dict_scores_simtest["lr_l2"], notears_l2_sparse_dict_scores_simtest["lr_e"],
+                          notears_l2_sparse_dict_scores_simtest["nb"], notears_l2_sparse_dict_scores_simtest["nb_g"],
+                          notears_l2_sparse_dict_scores_simtest["nb_m"], notears_l2_sparse_dict_scores_simtest["nb_c"],
+                          notears_l2_sparse_dict_scores_simtest["svm"], notears_l2_sparse_dict_scores_simtest["svm_po"],
+                          notears_l2_sparse_dict_scores_simtest["svm_r"], notears_l2_sparse_dict_scores_simtest["knn"],
+                          notears_l2_sparse_dict_scores_simtest["knn_d"]]
+    nt_p_sparse_means = [notears_poisson_sparse_dict_scores_simtest["dt"], notears_poisson_sparse_dict_scores_simtest["dt_e"],
+                         notears_poisson_sparse_dict_scores_simtest["rf"], notears_poisson_sparse_dict_scores_simtest["rf_e"],
+                         notears_poisson_sparse_dict_scores_simtest["lr"], notears_poisson_sparse_dict_scores_simtest["lr_l1"],
+                         notears_poisson_sparse_dict_scores_simtest["lr_l2"], notears_poisson_sparse_dict_scores_simtest["lr_e"],
+                         notears_poisson_sparse_dict_scores_simtest["nb"], notears_poisson_sparse_dict_scores_simtest["nb_g"],
+                         notears_poisson_sparse_dict_scores_simtest["nb_m"], notears_poisson_sparse_dict_scores_simtest["nb_c"],
+                         notears_poisson_sparse_dict_scores_simtest["svm"], notears_poisson_sparse_dict_scores_simtest["svm_po"],
+                         notears_poisson_sparse_dict_scores_simtest["svm_r"], notears_poisson_sparse_dict_scores_simtest["knn"],
+                         notears_poisson_sparse_dict_scores_simtest["knn_d"]]
+
+    p_sparse_means = [pomegranate_exact_sparse_dict_scores_simtest["dt"], pomegranate_exact_sparse_dict_scores_simtest["dt_e"],
+                      pomegranate_exact_sparse_dict_scores_simtest["rf"], pomegranate_exact_sparse_dict_scores_simtest["rf_e"],
+                      pomegranate_exact_sparse_dict_scores_simtest["lr"], pomegranate_exact_sparse_dict_scores_simtest["lr_l1"],
+                      pomegranate_exact_sparse_dict_scores_simtest["lr_l2"], pomegranate_exact_sparse_dict_scores_simtest["lr_e"],
+                      pomegranate_exact_sparse_dict_scores_simtest["nb"], pomegranate_exact_sparse_dict_scores_simtest["nb_g"],
+                      pomegranate_exact_sparse_dict_scores_simtest["nb_m"], pomegranate_exact_sparse_dict_scores_simtest["nb_c"],
+                      pomegranate_exact_sparse_dict_scores_simtest["svm"], pomegranate_exact_sparse_dict_scores_simtest["svm_po"],
+                      pomegranate_exact_sparse_dict_scores_simtest["svm_r"], pomegranate_exact_sparse_dict_scores_simtest["knn"],
+                      pomegranate_exact_sparse_dict_scores_simtest["knn_d"]]
+    p_g_sparse_means = [pomegranate_greedy_sparse_dict_scores_simtest["dt"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["dt_e"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["rf"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["rf_e"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["lr"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["lr_l1"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["lr_l2"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["lr_e"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["nb"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["nb_g"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["nb_m"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["nb_c"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["svm"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["svm_po"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["svm_r"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["knn"],
+                        pomegranate_greedy_sparse_dict_scores_simtest["knn_d"]]
+
+    pgmpy_tree_sparse_means = [pgmpy_tree_sparse_dict_scores_simtest["dt"],
+                               pgmpy_tree_sparse_dict_scores_simtest["dt_e"],
+                               pgmpy_tree_sparse_dict_scores_simtest["rf"],
+                               pgmpy_tree_sparse_dict_scores_simtest["rf_e"],
+                               pgmpy_tree_sparse_dict_scores_simtest["lr"],
+                               pgmpy_tree_sparse_dict_scores_simtest["lr_l1"],
+                               pgmpy_tree_sparse_dict_scores_simtest["lr_l2"],
+                               pgmpy_tree_sparse_dict_scores_simtest["lr_e"],
+                               pgmpy_tree_sparse_dict_scores_simtest["nb"],
+                               pgmpy_tree_sparse_dict_scores_simtest["nb_g"],
+                               pgmpy_tree_sparse_dict_scores_simtest["nb_m"],
+                               pgmpy_tree_sparse_dict_scores_simtest["nb_c"],
+                               pgmpy_tree_sparse_dict_scores_simtest["svm"],
+                               pgmpy_tree_sparse_dict_scores_simtest["svm_po"],
+                               pgmpy_tree_sparse_dict_scores_simtest["svm_r"],
+                               pgmpy_tree_sparse_dict_scores_simtest["knn"],
+                               pgmpy_tree_sparse_dict_scores_simtest["knn_d"]]
+    pgmpy_hc_sparse_means = [pgmpy_hc_sparse_dict_scores_simtest["dt"],
+                             pgmpy_hc_sparse_dict_scores_simtest["dt_e"],
+                             pgmpy_hc_sparse_dict_scores_simtest["rf"],
+                             pgmpy_hc_sparse_dict_scores_simtest["rf_e"],
+                             pgmpy_hc_sparse_dict_scores_simtest["lr"],
+                             pgmpy_hc_sparse_dict_scores_simtest["lr_l1"],
+                             pgmpy_hc_sparse_dict_scores_simtest["lr_l2"],
+                             pgmpy_hc_sparse_dict_scores_simtest["lr_e"],
+                             pgmpy_hc_sparse_dict_scores_simtest["nb"],
+                             pgmpy_hc_sparse_dict_scores_simtest["nb_g"],
+                             pgmpy_hc_sparse_dict_scores_simtest["nb_m"],
+                             pgmpy_hc_sparse_dict_scores_simtest["nb_c"],
+                             pgmpy_hc_sparse_dict_scores_simtest["svm"],
+                             pgmpy_hc_sparse_dict_scores_simtest["svm_po"],
+                             pgmpy_hc_sparse_dict_scores_simtest["svm_r"],
+                             pgmpy_hc_sparse_dict_scores_simtest["knn"],
+                             pgmpy_hc_sparse_dict_scores_simtest["knn_d"]]
+    pgmpy_mmhc_sparse_means = [pgmpy_mmhc_sparse_dict_scores_simtest["dt"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["dt_e"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["rf"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["rf_e"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["lr"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["lr_l1"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["lr_l2"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["lr_e"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["nb"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["nb_g"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["nb_m"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["nb_c"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["svm"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["svm_po"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["svm_r"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["knn"],
+                               pgmpy_mmhc_sparse_dict_scores_simtest["knn_d"]]
+
+    plt.rcParams["figure.figsize"] = [18, 18]
+    plt.rcParams["figure.autolayout"] = True
+
+    x_axis = np.arange(len(labels))
+    w = 0.05  # the width of the bars
+
+    plt.bar(x_axis + w, bn_sparse_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, nt_sparse_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_sparse_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_sparse_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, bn_h2pc_sparse_means, width=0.05, label="BN_LEARN (H2PC)", color="navy")
+    plt.bar(x_axis + w * 6, nt_sparse_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 7, nt_l2_sparse_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 8, nt_p_sparse_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 9, p_sparse_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 10, p_g_sparse_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 11, pgmpy_mmhc_sparse_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 12, pgmpy_hc_sparse_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 13, pgmpy_tree_sparse_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.style.use("fivethirtyeight")
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Sparse Problem - Performance by library on ML technique')
+    # plt.ylim(0.6, 1)
+    # plt.tick_params(rotation=45)
+    plt.savefig('pipeline_summary_benchmark_for_sparse_by_library_groupbar_simtest.png', bbox_inches='tight')
+    plt.show()
+
+    # Produce Dimensional Problem by Library on Problem
+    # Group by figure
+    labels = ['DT_G', 'DT_E', 'RF_G', 'RF_E', 'LR', 'LR_L1', 'LR_L2', 'LR_E', 'NB_B', 'NB_G', 'NB_M', 'NB_C', 'SVM_S',
+              'SVM_P', 'SVM_R', 'KNN_W', 'KNN_D']
+    bn_dimension_means = [bnlearn_dimension_dict_scores_simtest["dt"], bnlearn_dimension_dict_scores_simtest["dt_e"],
+                          bnlearn_dimension_dict_scores_simtest["rf"], bnlearn_dimension_dict_scores_simtest["rf_e"],
+                          bnlearn_dimension_dict_scores_simtest["lr"], bnlearn_dimension_dict_scores_simtest["lr_l1"],
+                          bnlearn_dimension_dict_scores_simtest["lr_l2"], bnlearn_dimension_dict_scores_simtest["lr_e"],
+                          bnlearn_dimension_dict_scores_simtest["nb"], bnlearn_dimension_dict_scores_simtest["nb_g"],
+                          bnlearn_dimension_dict_scores_simtest["nb_m"], bnlearn_dimension_dict_scores_simtest["nb_c"],
+                          bnlearn_dimension_dict_scores_simtest["svm"], bnlearn_dimension_dict_scores_simtest["svm_po"],
+                          bnlearn_dimension_dict_scores_simtest["svm_r"], bnlearn_dimension_dict_scores_simtest["knn"],
+                          bnlearn_dimension_dict_scores_simtest["knn_d"]]
+    bn_tabu_dimension_means = [bnlearn_tabu_dimension_dict_scores_simtest["dt"], bnlearn_tabu_dimension_dict_scores_simtest["dt_e"],
+                               bnlearn_tabu_dimension_dict_scores_simtest["rf"], bnlearn_tabu_dimension_dict_scores_simtest["rf_e"],
+                               bnlearn_tabu_dimension_dict_scores_simtest["lr"], bnlearn_tabu_dimension_dict_scores_simtest["lr_l1"],
+                               bnlearn_tabu_dimension_dict_scores_simtest["lr_l2"], bnlearn_tabu_dimension_dict_scores_simtest["lr_e"],
+                               bnlearn_tabu_dimension_dict_scores_simtest["nb"], bnlearn_tabu_dimension_dict_scores_simtest["nb_g"],
+                               bnlearn_tabu_dimension_dict_scores_simtest["nb_m"], bnlearn_tabu_dimension_dict_scores_simtest["nb_c"],
+                               bnlearn_tabu_dimension_dict_scores_simtest["svm"], bnlearn_tabu_dimension_dict_scores_simtest["svm_po"],
+                               bnlearn_tabu_dimension_dict_scores_simtest["svm_r"], bnlearn_tabu_dimension_dict_scores_simtest["knn"],
+                               bnlearn_tabu_dimension_dict_scores_simtest["knn_d"]]
+    bn_mmhc_dimension_means = [bnlearn_mmhc_dimension_dict_scores_simtest["dt"], bnlearn_mmhc_dimension_dict_scores_simtest["dt_e"],
+                               bnlearn_mmhc_dimension_dict_scores_simtest["rf"], bnlearn_mmhc_dimension_dict_scores_simtest["rf_e"],
+                               bnlearn_mmhc_dimension_dict_scores_simtest["lr"], bnlearn_mmhc_dimension_dict_scores_simtest["lr_l1"],
+                               bnlearn_mmhc_dimension_dict_scores_simtest["lr_l2"], bnlearn_mmhc_dimension_dict_scores_simtest["lr_e"],
+                               bnlearn_mmhc_dimension_dict_scores_simtest["nb"], bnlearn_mmhc_dimension_dict_scores_simtest["nb_g"],
+                               bnlearn_mmhc_dimension_dict_scores_simtest["nb_m"], bnlearn_mmhc_dimension_dict_scores_simtest["nb_c"],
+                               bnlearn_mmhc_dimension_dict_scores_simtest["svm"], bnlearn_mmhc_dimension_dict_scores_simtest["svm_po"],
+                               bnlearn_mmhc_dimension_dict_scores_simtest["svm_r"], bnlearn_mmhc_dimension_dict_scores_simtest["knn"],
+                               bnlearn_mmhc_dimension_dict_scores_simtest["knn_d"]]
+    bn_rsmax2_dimension_means = [bnlearn_rsmax2_dimension_dict_scores_simtest["dt"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["dt_e"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["rf"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["rf_e"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["lr"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["lr_l1"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["lr_l2"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["lr_e"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["nb"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["nb_g"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["nb_m"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["nb_c"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["svm"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["svm_po"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["svm_r"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["knn"],
+                                 bnlearn_rsmax2_dimension_dict_scores_simtest["knn_d"]]
+    bn_h2pc_dimension_means = [bnlearn_h2pc_dimension_dict_scores_simtest["dt"], bnlearn_h2pc_dimension_dict_scores_simtest["dt_e"],
+                               bnlearn_h2pc_dimension_dict_scores_simtest["rf"], bnlearn_h2pc_dimension_dict_scores_simtest["rf_e"],
+                               bnlearn_h2pc_dimension_dict_scores_simtest["lr"], bnlearn_h2pc_dimension_dict_scores_simtest["lr_l1"],
+                               bnlearn_h2pc_dimension_dict_scores_simtest["lr_l2"], bnlearn_h2pc_dimension_dict_scores_simtest["lr_e"],
+                               bnlearn_h2pc_dimension_dict_scores_simtest["nb"], bnlearn_h2pc_dimension_dict_scores_simtest["nb_g"],
+                               bnlearn_h2pc_dimension_dict_scores_simtest["nb_m"], bnlearn_h2pc_dimension_dict_scores_simtest["nb_c"],
+                               bnlearn_h2pc_dimension_dict_scores_simtest["svm"], bnlearn_h2pc_dimension_dict_scores_simtest["svm_po"],
+                               bnlearn_h2pc_dimension_dict_scores_simtest["svm_r"], bnlearn_h2pc_dimension_dict_scores_simtest["knn"],
+                               bnlearn_h2pc_dimension_dict_scores_simtest["knn_d"]]
+
+    nt_dimension_means = [notears_dimension_dict_scores_simtest["dt"], notears_dimension_dict_scores_simtest["dt_e"],
+                          notears_dimension_dict_scores_simtest["rf"], notears_dimension_dict_scores_simtest["rf_e"],
+                          notears_dimension_dict_scores_simtest["lr"], notears_dimension_dict_scores_simtest["lr_l1"],
+                          notears_dimension_dict_scores_simtest["lr_l2"], notears_dimension_dict_scores_simtest["lr_e"],
+                          notears_dimension_dict_scores_simtest["nb"], notears_dimension_dict_scores_simtest["nb_g"],
+                          notears_dimension_dict_scores_simtest["nb_m"], notears_dimension_dict_scores_simtest["nb_c"],
+                          notears_dimension_dict_scores_simtest["svm"], notears_dimension_dict_scores_simtest["svm_po"],
+                          notears_dimension_dict_scores_simtest["svm_r"], notears_dimension_dict_scores_simtest["knn"],
+                          notears_dimension_dict_scores_simtest["knn_d"]]
+    nt_l2_dimension_means = [notears_l2_dimension_dict_scores_simtest["dt"], notears_l2_dimension_dict_scores_simtest["dt_e"],
+                             notears_l2_dimension_dict_scores_simtest["rf"], notears_l2_dimension_dict_scores_simtest["rf_e"],
+                             notears_l2_dimension_dict_scores_simtest["lr"], notears_l2_dimension_dict_scores_simtest["lr_l1"],
+                             notears_l2_dimension_dict_scores_simtest["lr_l2"], notears_l2_dimension_dict_scores_simtest["lr_e"],
+                             notears_l2_dimension_dict_scores_simtest["nb"], notears_l2_dimension_dict_scores_simtest["nb_g"],
+                             notears_l2_dimension_dict_scores_simtest["nb_m"], notears_l2_dimension_dict_scores_simtest["nb_c"],
+                             notears_l2_dimension_dict_scores_simtest["svm"], notears_l2_dimension_dict_scores_simtest["svm_po"],
+                             notears_l2_dimension_dict_scores_simtest["svm_r"], notears_l2_dimension_dict_scores_simtest["knn"],
+                             notears_l2_dimension_dict_scores_simtest["knn_d"]]
+    nt_p_dimension_means = [notears_poisson_dimension_dict_scores_simtest["dt"], notears_poisson_dimension_dict_scores_simtest["dt_e"],
+                            notears_poisson_dimension_dict_scores_simtest["rf"], notears_poisson_dimension_dict_scores_simtest["rf_e"],
+                            notears_poisson_dimension_dict_scores_simtest["lr"], notears_poisson_dimension_dict_scores_simtest["lr_l1"],
+                            notears_poisson_dimension_dict_scores_simtest["lr_l2"],
+                            notears_poisson_dimension_dict_scores_simtest["lr_e"],
+                            notears_poisson_dimension_dict_scores_simtest["nb"], notears_poisson_dimension_dict_scores_simtest["nb_g"],
+                            notears_poisson_dimension_dict_scores_simtest["nb_m"],
+                            notears_poisson_dimension_dict_scores_simtest["nb_c"],
+                            notears_poisson_dimension_dict_scores_simtest["svm"],
+                            notears_poisson_dimension_dict_scores_simtest["svm_po"],
+                            notears_poisson_dimension_dict_scores_simtest["svm_r"],
+                            notears_poisson_dimension_dict_scores_simtest["knn"],
+                            notears_poisson_dimension_dict_scores_simtest["knn_d"]]
+
+    p_dimension_means = [pomegranate_exact_dimension_dict_scores_simtest["dt"], pomegranate_exact_dimension_dict_scores_simtest["dt_e"],
+                         pomegranate_exact_dimension_dict_scores_simtest["rf"], pomegranate_exact_dimension_dict_scores_simtest["rf_e"],
+                         pomegranate_exact_dimension_dict_scores_simtest["lr"],
+                         pomegranate_exact_dimension_dict_scores_simtest["lr_l1"],
+                         pomegranate_exact_dimension_dict_scores_simtest["lr_l2"],
+                         pomegranate_exact_dimension_dict_scores_simtest["lr_e"], pomegranate_exact_dimension_dict_scores_simtest["nb"],
+                         pomegranate_exact_dimension_dict_scores_simtest["nb_g"],
+                         pomegranate_exact_dimension_dict_scores_simtest["nb_m"],
+                         pomegranate_exact_dimension_dict_scores_simtest["nb_c"],
+                         pomegranate_exact_dimension_dict_scores_simtest["svm"],
+                         pomegranate_exact_dimension_dict_scores_simtest["svm_po"],
+                         pomegranate_exact_dimension_dict_scores_simtest["svm_r"],
+                         pomegranate_exact_dimension_dict_scores_simtest["knn"],
+                         pomegranate_exact_dimension_dict_scores_simtest["knn_d"]]
+    p_g_dimension_means = [pomegranate_greedy_dimension_dict_scores_simtest["dt"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["dt_e"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["rf"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["rf_e"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["lr"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["lr_l1"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["lr_l2"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["lr_e"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["nb"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["nb_g"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["nb_m"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["nb_c"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["svm"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["svm_po"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["svm_r"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["knn"],
+                           pomegranate_greedy_dimension_dict_scores_simtest["knn_d"]]
+
+    pgmpy_tree_dimension_means = [pgmpy_tree_dimension_dict_scores_simtest["dt"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["dt_e"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["rf"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["rf_e"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["lr"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["lr_l1"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["lr_l2"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["lr_e"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["nb"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["nb_g"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["nb_m"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["nb_c"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["svm"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["svm_po"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["svm_r"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["knn"],
+                                  pgmpy_tree_dimension_dict_scores_simtest["knn_d"]]
+    pgmpy_hc_dimension_means = [pgmpy_hc_dimension_dict_scores_simtest["dt"],
+                                pgmpy_hc_dimension_dict_scores_simtest["dt_e"],
+                                pgmpy_hc_dimension_dict_scores_simtest["rf"],
+                                pgmpy_hc_dimension_dict_scores_simtest["rf_e"],
+                                pgmpy_hc_dimension_dict_scores_simtest["lr"],
+                                pgmpy_hc_dimension_dict_scores_simtest["lr_l1"],
+                                pgmpy_hc_dimension_dict_scores_simtest["lr_l2"],
+                                pgmpy_hc_dimension_dict_scores_simtest["lr_e"],
+                                pgmpy_hc_dimension_dict_scores_simtest["nb"],
+                                pgmpy_hc_dimension_dict_scores_simtest["nb_g"],
+                                pgmpy_hc_dimension_dict_scores_simtest["nb_m"],
+                                pgmpy_hc_dimension_dict_scores_simtest["nb_c"],
+                                pgmpy_hc_dimension_dict_scores_simtest["svm"],
+                                pgmpy_hc_dimension_dict_scores_simtest["svm_po"],
+                                pgmpy_hc_dimension_dict_scores_simtest["svm_r"],
+                                pgmpy_hc_dimension_dict_scores_simtest["knn"],
+                                pgmpy_hc_dimension_dict_scores_simtest["knn_d"]]
+    pgmpy_mmhc_dimension_means = [pgmpy_mmhc_dimension_dict_scores_simtest["dt"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["dt_e"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["rf"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["rf_e"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["lr"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["lr_l1"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["lr_l2"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["lr_e"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["nb"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["nb_g"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["nb_m"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["nb_c"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["svm"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["svm_po"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["svm_r"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["knn"],
+                                  pgmpy_mmhc_dimension_dict_scores_simtest["knn_d"]]
+
+    plt.rcParams["figure.figsize"] = [18, 18]
+    plt.rcParams["figure.autolayout"] = True
+
+    x_axis = np.arange(len(labels))
+    w = 0.05  # the width of the bars
+
+    plt.bar(x_axis + w, bn_dimension_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, nt_dimension_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_dimension_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_dimension_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, bn_h2pc_dimension_means, width=0.05, label="BN_LEARN (H2PC)", color="navy")
+    plt.bar(x_axis + w * 6, nt_dimension_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 7, nt_l2_dimension_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 8, nt_p_dimension_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 9, p_dimension_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 10, p_g_dimension_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 11, pgmpy_mmhc_dimension_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 12, pgmpy_hc_dimension_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 13, pgmpy_tree_dimension_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.style.use("fivethirtyeight")
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Dimension Problem - Performance by library on ML technique')
+    # plt.ylim(0.6, 1)
+    # plt.tick_params(rotation=45)
+    plt.savefig('pipeline_summary_benchmark_for_dimension_by_library_groupbar_simtest.png', bbox_inches='tight')
     plt.show()
 
 write_real_to_figures()
