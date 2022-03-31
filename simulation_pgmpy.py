@@ -28,10 +28,11 @@ def pgmpy_setup_pc(train_data, training_n):
         construct.add_cpds(cpd)
     construct.check_model()
     pgmpy_sampling_train = construct.simulate(n_samples=int(1000))
+    pgmpy_sampling_test = construct.simulate(n_samples=int(1000))
     print("this is the output shape after structure learning", pgmpy_sampling_train.shape)
     #print(pgmpy_sampling_train)
     np.savetxt('V_est_train.csv', pgmpy_sampling_train, delimiter=',')
-    return pgmpy_sampling_train
+    return pgmpy_sampling_train, pgmpy_sampling_test
 
 def pgmpy_setup_hc(train_data, training_n):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -45,10 +46,11 @@ def pgmpy_setup_hc(train_data, training_n):
         construct.add_cpds(cpd)
     construct.check_model()
     pgmpy_sampling_train = construct.simulate(n_samples=int(1000))
+    pgmpy_sampling_test = construct.simulate(n_samples=int(1000))
     print("this is the output shape after structure learning", pgmpy_sampling_train.shape)
     #print(pgmpy_sampling_train)
     np.savetxt('V_est_train.csv', pgmpy_sampling_train, delimiter=',')
-    return pgmpy_sampling_train
+    return pgmpy_sampling_train, pgmpy_sampling_test
 
 def pgmpy_setup_tree(train_data, training_n):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -62,10 +64,11 @@ def pgmpy_setup_tree(train_data, training_n):
         construct.add_cpds(cpd)
     construct.check_model()
     pgmpy_sampling_train = construct.simulate(n_samples=int(1000))
+    pgmpy_sampling_test = construct.simulate(n_samples=int(1000))
     print("this is the output shape after structure learning", pgmpy_sampling_train.shape)
     #print(pgmpy_sampling_train)
     np.savetxt('V_est_train.csv', pgmpy_sampling_train, delimiter=',')
-    return pgmpy_sampling_train
+    return pgmpy_sampling_train, pgmpy_sampling_test
 
 def pgmpy_setup_mmhc(train_data, training_n):
     print("this is the training data shape before structure learning", train_data.shape)
@@ -79,10 +82,11 @@ def pgmpy_setup_mmhc(train_data, training_n):
         construct.add_cpds(cpd)
     construct.check_model()
     pgmpy_sampling_train = construct.simulate(n_samples=int(1000))
+    pgmpy_sampling_test = construct.simulate(n_samples=int(1000))
     print("this is the output shape after structure learning", pgmpy_sampling_train.shape)
     #print(pgmpy_sampling_train)
     np.savetxt('V_est_train.csv', pgmpy_sampling_train, delimiter=',')
-    return pgmpy_sampling_train
+    return pgmpy_sampling_train, pgmpy_sampling_test
 
 #def pgmpy_setup_exhaustive(train_data, training_n):
 #    print("this is the training data shape before structure learning", train_data.shape)
