@@ -44,16 +44,19 @@ TEST_SIZE = 1000
 
 
 def slice_data(pipeline_type, train_data, test_data):
+    print(train_data.shape)
+    print(test_data.shape)
+    # todo get shape automatically
     if(pipeline_type==4):
         x_train = train_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])  # num predictors
-        y_train = train_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()  # outcome
+        y_train = train_data.iloc[:, 10].to_numpy().reshape([-1])  # outcome
         x_test = test_data.iloc[:, 0:10].to_numpy().reshape([-1, 10])  # num predictors
-        y_test = test_data.iloc[:, 10].to_numpy().reshape([-1]).ravel()  # outcome
+        y_test = test_data.iloc[:, 10].to_numpy().reshape([-1])  # outcome
     else:
         x_train = train_data.iloc[:, 0:4].to_numpy().reshape([-1, 4])  # num predictors
-        y_train = train_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()  # outcome
-        x_test = test_data.iloc[:, 0:4].to_numpy().reshape([-1, 10])  # num predictors
-        y_test = test_data.iloc[:, 4].to_numpy().reshape([-1]).ravel()  # outcome
+        y_train = train_data.iloc[:, 4].to_numpy().reshape([-1])  # outcome
+        x_test = test_data.iloc[:, 0:4].to_numpy().reshape([-1, 4])  # num predictors
+        y_test = test_data.iloc[:, 4].to_numpy().reshape([-1])  # outcome
     return x_train, y_train, x_test, y_test
 
 
@@ -86,26 +89,27 @@ def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test
     learned_data_train = None
     learned_data_test = None
     if pkg_name=="notears":
-        model = notears_linear(real_data[0:100], lambda1=0.01, loss_type=config)
+        model = notears_linear(real_data, lambda1=0.01, loss_type=config)
         learned_data_train = utils.simulate_linear_sem(model, num_train, 'logistic')
         learned_data_test = utils.simulate_linear_sem(model, num_test, 'logistic')
     elif pkg_name=="pgmpy":
         model_learn = None
         model = None
-        if config=="pc":
-            model_learn = PC(real_data[0:100])
-            model = model_learn.estimate()
-        elif config=="hc":
-            model_learn = HillClimbSearch(real_data[0:100])
-            model = model_learn.estimate(scoring_method=BicScore(real_data[0:100]))
+        real_data = pd.DataFrame(real_data)
+        #if config=="pc":
+        #    model_learn = PC(real_data)
+        #    model = model_learn.estimate()
+        if config=="hc":
+            model_learn = HillClimbSearch(real_data)
+            model = model_learn.estimate(scoring_method=BicScore(real_data))
         elif config=="tree":
-            model_learn = TreeSearch(real_data[0:100])
+            model_learn = TreeSearch(real_data)
             model = model_learn.estimate(estimator_type='chow-liu')
         elif config=="mmhc":
-            model_learn = MmhcEstimator(real_data[0:100])
+            model_learn = MmhcEstimator(real_data)
             model = model_learn.estimate()
         construct = BayesianModel(model)
-        estimator = BayesianEstimator(construct, real_data[0:100])
+        estimator = BayesianEstimator(construct, real_data)
         cpds = estimator.get_parameters(prior_type='BDeu', equivalent_sample_size=1000)
         for cpd in cpds:
             construct.add_cpds(cpd)
@@ -113,15 +117,20 @@ def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test
         learned_data_train = construct.simulate(n_samples=int(1000))
         learned_data_test = construct.simulate(n_samples=int(1000))
     elif pkg_name=="pomegranate":
-        model = BayesianNetwork.from_samples(real_data[0:100], state_names=real_data[0:100].columns.values, algorithm=config)
+        real_data = pd.DataFrame(real_data)
+        #print(real_data)
+        model = BayesianNetwork.from_samples(real_data, algorithm=config)
         learned_data_train = model.sample(1000)
         learned_data_test = model.sample(1000)
+    learned_data_train = pd.DataFrame(learned_data_train)
+    learned_data_test = pd.DataFrame(learned_data_test)
     x_train, y_train, x_test, y_test = slice_data(pipeline_type, learned_data_train, learned_data_test)
     return x_train, y_train, x_test, y_test
 
 
 # Evaluate function for all ML algorithms
 def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
+    # todo what does y_train do
     scores = {}
     pipeline_name = ["linear", "non-linear", "sparse", "dimension"][pipeline_type-1]
     MLModels = {"DTCgini": DecisionTreeClassifier(criterion='gini'),
@@ -144,307 +153,53 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
             x_test_rdy = min_max_scaler.transform(x_test)
         clf = MLModels[key]
         clf = clf.fit(x_train_rdy, y_train)
-        y_pred = clf.predict(x_test)
+        y_pred = clf.predict(x_test_rdy)
         scores[f'{world}_{pipeline_name}_{key}'] = metrics.accuracy_score(y_test,y_pred)
     return scores
 
-def evaluate_real(num_train, num_test):
-    results = {}
-    for pipeline_type in range(1,5):
-        x_train, y_train, x_test, y_test = get_data_from_real_world(pipeline_type, num_train, num_test)
-        scores = world_evaluate("real", pipeline_type, x_train, y_train, x_test, y_test)
-        results.update(scores)
-    return results
 
-def evaluate_on_learned_world(x_train, y_train, x_test, y_test):
+def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test):
     learners = ["notears","pgmpy","pomegranate"]
     notears_loss = ["logistic", "l2", "poisson"]
     pgmpy_algorithms = ["hc","tree", "mmhc"]
     pomegranate_algorithms = ["exact", "greedy"]
-    pipelines = list(range(1, 5))
     results = {}
-    for pipeline in pipelines:
-        for loss in notears_loss:
-            x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("notears", loss, np.concatenate([x_train[:100], y_train[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
-            scores = world_evaluate("notears", pipeline, x_train_lr, y_train_lr, x_test, y_test)
-            results.update(scores)
-        for algorithm in pgmpy_algorithms:
-            x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pgmpy", algorithm, np.concatenate([x_train[:100], y_train[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
-            scores = world_evaluate("pgmpy", pipeline, x_train_lr, y_train_lr, x_test, y_test)
-            results.update(scores)
-        for algorithm in pomegranate_algorithms:
-            x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pomegranate", algorithm, np.concatenate([x_train[:100], y_train[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
-            scores = world_evaluate("pomegranate", pipeline, x_train_lr, y_train_lr, x_test, y_test)
-            results.update(scores)
+    print("evaluating on learned world")
+    for loss in notears_loss:
+        print(loss)
+        x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("notears", loss, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+        scores = world_evaluate("notears", pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
+        results.update(scores)
+    for algorithm in pgmpy_algorithms:
+        print(algorithm)
+        x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pgmpy", algorithm, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+        scores = world_evaluate("pgmpy", pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
+        results.update(scores)
+    for algorithm in pomegranate_algorithms:
+        x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pomegranate", algorithm, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+        scores = world_evaluate("pomegranate", pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
+        results.update(scores)
     return results
-
-#PIPELINE_TYPE_LINEAR_CONSTANT = 1
-#PIPELINE_TYPE_NONLINEAR_CONSTANT = 2
-#PIPELINE_TYPE_SPARSE_CONSTANT = 3
-#PIPELINE_TYPE_DIMENSION_CONSTANT = 4
-
-#data_real_linear = get_data_from_real_world(PIPELINE_TYPE_LINEAR_CONSTANT, 1000, 1000)
-#data_real_nonlinear = get_data_from_real_world(PIPELINE_TYPE_NONLINEAR_CONSTANT, 1000, 1000)
-#data_real_sparse = get_data_from_real_world(PIPELINE_TYPE_SPARSE_CONSTANT, 1000, 1000)
-#data_real_dimension = get_data_from_real_world(PIPELINE_TYPE_DIMENSION_CONSTANT, 1000, 1000)
-
 
 
 def run_all():
     results_real = {}
     results_learned = {}
     for pipeline_type in range(1,5):
+        print(f'pipeline type: {pipeline_type}')
         x_train, y_train, x_test, y_test = get_data_from_real_world(pipeline_type, TRAIN_SIZE, TEST_SIZE)
         scores_real = world_evaluate("real", pipeline_type, x_train, y_train, x_test, y_test)
+        print("got real world scores")
         results_real.update(scores_real)
-        scores_learned = evaluate_on_learned_world(x_train, y_train, x_test, y_test)
+        scores_learned = evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test)
         results_learned.update(scores_learned)
     return results_real, results_learned
 
-scores_real = evaluate_real(1000, 1000)
-print(scores_real)
-
+results_real, results_learned = run_all()
+print(results_real)
+print(results_learned)
 # scores_learned = world_evaluate("real", PIPELINE_TYPE_LINEAR_CONSTANT, *data_real_linear)
 
-#get_data_from_learned_world("notears", "logistic", real_data, num_train, num_test, pipeline_type):
-
-#pipeline_type = 1
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_linear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (HC)")
-#pipeline_type = 2
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_nonlinear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (HC)")
-#pipeline_type = 3
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_sparse_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (HC)")
-#pipeline_type = 4
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_hc(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-#bnlearn_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:10], bn_learn_sample_train.iloc[:,10], pipeline_type, "BN LEARN (HC)")
-
-#Run hyperparameter of bnlearn - tabu
-#pipeline_type = 1
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_tabu_linear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (TABU)")
-#pipeline_type = 2
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_tabu_nonlinear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (TABU)")
-#pipeline_type = 3
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_tabu_sparse_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (TABU)")
-#pipeline_type = 4
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_tabu(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-#bnlearn_tabu_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:10], bn_learn_sample_train.iloc[:,10], pipeline_type, "BN LEARN (TABU)")
-#end of tabu workflows
-
-#Run hyperparameter of bnlearn - pc
-#pipeline_type = 1
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_pc(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_pc_linear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (PC)")
-#pipeline_type = 2
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed.
-#import_simulated_csv()
-
-#bnlearn_pc_nonlinear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (PC)")
-#pipeline_type = 3
-#simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed.
-#import_simulated_csv()
-
-#bnlearn_pc_sparse_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (PC)")
-#pipeline_type = 4
-#simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-#bnlearn_pc_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:2], bn_learn_sample_train.iloc[:,2], pipeline_type, "BN LEARN (PC)")
-#end of pc workflows
-
-#Run hyperparameter of bnlearn - gs
-#pipeline_type = 1
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_gs(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_gs_linear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (GS)")
-#pipeline_type = 2
-#simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_gs(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_gs_nonlinear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (GS)")
-#pipeline_type = 3
-#simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_gs(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_gs_sparse_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (GS)")
-#pipeline_type = 4
-#simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_gs(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-#bnlearn_gs_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:2], bn_learn_sample_train.iloc[:,2], pipeline_type, "BN LEARN (GS)")
-#end of gs workflows
-
-#Run hyperparameter of bnlearn - iamb
-#pipeline_type = 1
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_iamb(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed.
-#import_simulated_csv()
-
-#bnlearn_iamb_linear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (IAMB)")
-#pipeline_type = 2
-#simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_iamb(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_iamb_nonlinear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (IAMB)")
-#pipeline_type = 3
-#simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_iamb(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_iamb_sparse_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (IAMB)")
-#pipeline_type = 4
-#simulation_dagsim.setup_realworld(pipeline_type, 10000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_iamb(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-#bnlearn_iamb_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:2], bn_learn_sample_train.iloc[:,2], pipeline_type, "BN LEARN (IAMB)")
-#end of pc workflows
-
-#Run hyperparameter of bnlearn - mmhc
-#pipeline_type = 1
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_mmhc_linear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (MMHC)")
-#pipeline_type = 2
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_mmhc_nonlinear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (MMHC)")
-#pipeline_type = 3
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_mmhc_sparse_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (MMHC)")
-#pipeline_type = 4
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_mmhc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-#bnlearn_mmhc_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:10], bn_learn_sample_train.iloc[:,10], pipeline_type, "BN LEARN (MMHC)")
-#end of mmhc workflows
-
-#Run hyperparameter of bnlearn - rsmax2
-#pipeline_type = 1
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_rsmax2_linear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (RSMAX2)")
-#pipeline_type = 2
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_rsmax2_nonlinear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (RSMAX2)")
-#pipeline_type = 3
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_rsmax2_sparse_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (RSMAX2)")
-#pipeline_type = 4
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_rsmax2(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-#bnlearn_rsmax2_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:10], bn_learn_sample_train.iloc[:,10], pipeline_type, "BN LEARN (RSMAX2)")
-#end of rsmax2 workflows
-
-#Run hyperparameter of bnlearn - h2pc
-#pipeline_type = 1
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type)
-#import_simulated_csv()
-
-#bnlearn_h2pc_linear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (H2PC)")
-#pipeline_type = 2
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_h2pc_nonlinear_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (H2PC)")
-#pipeline_type = 3
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-
-#bnlearn_h2pc_sparse_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:4], bn_learn_sample_train.iloc[:,4], pipeline_type, "BN LEARN (H2PC)")
-#pipeline_type = 4
-#simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-#import_real_world_csv(pipeline_type)
-#simulation_bnlearn.bnlearn_setup_h2pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
-#import_simulated_csv()
-#bnlearn_h2pc_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:10], bn_learn_sample_train.iloc[:,10], pipeline_type, "BN LEARN (H2PC)")
-#end of h2pc workflows
 
 def write_learned_to_csv():
     #for loop with drawn parameters from dict - list comprehension
