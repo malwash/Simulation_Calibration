@@ -25,7 +25,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import csv
 import simulation_notears
-import simulation_bnlearn
 import simulation_dagsim
 import simulation_models
 from sklearn import metrics
@@ -130,7 +129,7 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
                 "RFCgini": RandomForestClassifier(criterion='gini'),
                 "RFCent": RandomForestClassifier(criterion='entropy'),
                 "LRnone": LogisticRegression(penalty='none'),
-                "LRl1": LogisticRegression(penalty='l1', solver='liblinear', l1_ratio=1),
+                "LRl1": LogisticRegression(penalty='l1', solver='liblinear'),
                 "LRl2": LogisticRegression(penalty='l2'),
                 "LRmix": LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5),
                 "BNB": BernoulliNB(), "GNB": GaussianNB(), "MnNB": MultinomialNB(), "CNB": ComplementNB(),
@@ -160,7 +159,7 @@ def evaluate_real(num_train, num_test):
 def evaluate_on_learned_world(x_train, y_train, x_test, y_test):
     learners = ["notears","pgmpy","pomegranate"]
     notears_loss = ["logistic", "l2", "poisson"]
-    pgmpy_algorithms = ["hc", "pc", "tree", "mmhc"]
+    pgmpy_algorithms = ["hc","tree", "mmhc"]
     pomegranate_algorithms = ["exact", "greedy"]
     pipelines = list(range(1, 5))
     results = {}
@@ -200,6 +199,7 @@ def run_all():
         results_real.update(scores_real)
         scores_learned = evaluate_on_learned_world(x_train, y_train, x_test, y_test)
         results_learned.update(scores_learned)
+    return results_real, results_learned
 
 scores_real = evaluate_real(1000, 1000)
 print(scores_real)
