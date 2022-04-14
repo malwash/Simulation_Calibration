@@ -40,6 +40,9 @@ global nonlinear_training
 global sparse_training
 global dimensional_training
 
+TRAIN_SIZE = 1000
+TEST_SIZE = 1000
+
 
 def slice_data(pipeline_type, train_data, test_data):
     if(pipeline_type==4):
