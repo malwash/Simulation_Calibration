@@ -27,6 +27,14 @@ from sklearn import metrics
 from sklearn import svm
 from notears import utils
 from notears.linear import notears_linear
+import rpy2
+import rpy2.robjects as robjects
+import rpy2.robjects.packages as rpackages
+import rpy2.robjects as ro
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
+from rpy2.robjects.vectors import DataFrame, StrVector
+from rpy2.robjects.packages import importr
 
 TRAIN_SIZE = 1000
 TEST_SIZE = 1000
@@ -128,6 +136,279 @@ def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test
         model = BayesianNetwork.from_samples(real_data, algorithm=config)
         learned_data_train = model.sample(1000)
         learned_data_test = model.sample(1000)
+    elif pkg_name=="bnlearn": #bnlearn R emulation
+        if config=="hc":
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_hillclimbing <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
+                        my_bn <- hc(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_hillclimbing()
+                        ''')
+            elif (pipeline_type == 4):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_hillclimbing <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
+                        my_bn <- hc(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_hillclimbing()
+                        ''')
+            bn_hc = robjects.r['bn_hillclimbing']
+            bn_train_output = bn_hc()
+
+            result = np.array(bn_train_output)
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                result_edit = result[:, :].reshape([-1, 5])
+            elif (pipeline_type == 4):
+                result_edit = result[:, :].reshape([-1, 11])
+            learned_data_train = pd.DataFrame(result_edit)
+
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                robjects.r('''
+                            library(bnlearn)
+                            bn_hillclimbing <- function(r, verbose=FALSE) {
+                            databn <-read.csv("train.csv", header=FALSE)
+                            databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
+                            my_bn <- hc(databn)
+                            fit = bn.fit(my_bn, databn)
+                            training_output = rbn(my_bn, 1000, databn)
+                            }
+                            bn_hillclimbing()
+                            ''')
+            elif (pipeline_type == 4):
+                robjects.r('''
+                            library(bnlearn)
+                            bn_hillclimbing <- function(r, verbose=FALSE) {
+                            databn <-read.csv("train.csv", header=FALSE)
+                            databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
+                            my_bn <- hc(databn)
+                            fit = bn.fit(my_bn, databn)
+                            training_output = rbn(my_bn, 1000, databn)
+                            }
+                            bn_hillclimbing()
+                            ''')
+            bn_hc = robjects.r['bn_hillclimbing']
+            bn_test_output = bn_hc()
+
+            result = np.array(bn_test_output)
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                result_edit_test = result[:, :].reshape([-1, 5])
+            elif (pipeline_type == 4):
+                result_edit_test = result[:, :].reshape([-1, 11])
+            learned_data_test = pd.DataFrame(result_edit_test)
+        elif config=="tabu":
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_tabu <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
+                        my_bn <- tabu(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_tabu()
+                        ''')
+            elif (pipeline_type == 4):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_tabu <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
+                        my_bn <- tabu(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_tabu()
+                        ''')
+            bn_tabu = robjects.r['bn_tabu']
+            bn_train_output = bn_tabu()
+
+            result = np.array(bn_train_output)
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                result_edit = result[:, :].reshape([-1, 5])
+            elif (pipeline_type == 4):
+                result_edit = result[:, :].reshape([-1, 11])
+            learned_data_train = pd.DataFrame(result_edit)
+
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_tabu <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
+                        my_bn <- tabu(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_tabu()
+                        ''')
+            elif (pipeline_type == 4):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_tabu <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
+                        my_bn <- tabu(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_tabu()
+                        ''')
+            bn_tabu = robjects.r['bn_tabu']
+            bn_test_output = bn_tabu()
+
+            result = np.array(bn_test_output)
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                result_edit_test = result[:, :].reshape([-1, 5])
+            elif (pipeline_type == 4):
+                result_edit_test = result[:, :].reshape([-1, 11])
+            learned_data_test = pd.DataFrame(result_edit_test)
+        elif config=="mmhc":
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_mmhc <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
+                        my_bn <- mmhc(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_mmhc()
+                        ''')
+            elif (pipeline_type == 4):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_mmhc <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
+                        my_bn <- mmhc(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_mmhc()
+                        ''')
+            bn_mmhc = robjects.r['bn_mmhc']
+            bn_train_output = bn_mmhc()
+
+            result = np.array(bn_train_output)
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                result_edit = result[:, :].reshape([-1, 5])
+            elif (pipeline_type == 4):
+                result_edit = result[:, :].reshape([-1, 11])
+            learned_data_train = pd.DataFrame(result_edit)
+
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_mmhc <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
+                        my_bn <- mmhc(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_mmhc()
+                        ''')
+            elif (pipeline_type == 4):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_mmhc <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
+                        my_bn <- mmhc(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_mmhc()
+                        ''')
+            bn_mmhc = robjects.r['bn_mmhc']
+            bn_test_output = bn_mmhc()
+
+            result = np.array(bn_test_output)
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                result_edit_test = result[:, :].reshape([-1, 5])
+            elif (pipeline_type == 4):
+                result_edit_test = result[:, :].reshape([-1, 11])
+            learned_data_test = pd.DataFrame(result_edit_test)
+        elif config=="rsmax2":
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_rsmax2 <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
+                        my_bn <- rsmax2(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_rsmax2()
+                        ''')
+            elif (pipeline_type == 4):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_rsmax2 <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
+                        my_bn <- rsmax2(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_rsmax2()
+                        ''')
+            bn_rsmax2 = robjects.r['bn_rsmax2']
+            bn_train_output = bn_rsmax2()
+
+            result = np.array(bn_train_output)
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                result_edit = result[:, :].reshape([-1, 5])
+            elif (pipeline_type == 4):
+                result_edit = result[:, :].reshape([-1, 11])
+            learned_data_train = pd.DataFrame(result_edit)
+
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_rsmax2 <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
+                        my_bn <- rsmax2(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_rsmax2()
+                        ''')
+            elif (pipeline_type == 4):
+                robjects.r('''
+                        library(bnlearn)
+                        bn_rsmax2 <- function(r, verbose=FALSE) {
+                        databn <-read.csv("train.csv", header=FALSE)
+                        databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
+                        my_bn <- rsmax2(databn)
+                        fit = bn.fit(my_bn, databn)
+                        training_output = rbn(my_bn, 1000, databn)
+                        }
+                        bn_rsmax2()
+                        ''')
+            bn_rsmax2 = robjects.r['bn_rsmax2']
+            bn_test_output = bn_rsmax2()
+
+            result = np.array(bn_test_output)
+            if (pipeline_type == 1 or pipeline_type == 2 or pipeline_type == 3):
+                result_edit_test = result[:, :].reshape([-1, 5])
+            elif (pipeline_type == 4):
+                result_edit_test = result[:, :].reshape([-1, 11])
+            learned_data_test = pd.DataFrame(result_edit_test)
     learned_data_train = pd.DataFrame(learned_data_train)
     learned_data_test = pd.DataFrame(learned_data_test)
     x_train, y_train, x_test, y_test = slice_data(pipeline_type, learned_data_train, learned_data_test)
@@ -183,10 +464,11 @@ def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test):
     :param y_test:
     :return:
     '''
-    learners = ["notears","pgmpy","pomegranate"]
+    learners = ["notears","pgmpy","pomegranate", "bnlearn"]
     notears_loss = ["logistic", "l2", "poisson"]
     pgmpy_algorithms = ["hc","tree", "mmhc"]
     pomegranate_algorithms = ["exact", "greedy"]
+    bnlearn_algorithms = ["hc", "tabu", "mmhc", "rsmax2"]
     results = {}
     for loss in notears_loss:
         print(loss)
@@ -202,6 +484,11 @@ def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test):
         print(algorithm)
         x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pomegranate", algorithm, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
         scores = world_evaluate("pomegranate"+"-"+algorithm, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
+        results.update(scores)
+    for algorithm in bnlearn_algorithms:
+        print(algorithm)
+        x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("bnlearn", algorithm, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+        scores = world_evaluate("bnlearn"+"-"+algorithm, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
         results.update(scores)
     return results
 
@@ -224,12 +511,11 @@ def run_all():
     return results_real, results_learned
 
 def write_results_to_csv():
-    #for loop with drawn parameters from dict - list comprehension
-    #for algorithm in ...
-    #for model in ..
-    real_results, learned_results = run_all()
-    print(real_results)
-    print(learned_results)
+    '''
+    input benchmarks of SimCal experiments to csv format
+    :return: saved csv's of benchmarks in the format (learner_problemtype_mlestimator)
+    '''
+
     with open('simulation_experiments_summary.csv', 'w', newline='') as csvfile:
         fieldnames = ['ProblemType', 'Algorithm', 'Method', 'Accuracy']
         thewriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -247,247 +533,299 @@ def write_results_to_csv():
             elif k.split('_')[-2] == "dimension":
                 thewriter.writerow({fieldnames[0]: k.split('_')[-2], fieldnames[1]: k.split('_')[-3], fieldnames[2]: k.split('_')[-1], fieldnames[3]: learned_results[k]})
 
+global real_results, learned_results #move these to a main call section
+real_results, learned_results = run_all()
+print(real_results)
+print(learned_results)
 write_results_to_csv()
 
+#refactor into list of calibrations and then iterate through list and designate benchmarks
 def write_results_to_figures():
+    '''
+    input benchmarks of SimCal experiments to output figures for predictive performance and structural performance
+    :return: saved png's of benchmarks grouped by problem type
+    '''
     # Group by figure
     labels = ['DT_G', 'DT_E', 'RF_G', 'RF_E', 'LR', 'LR_L1', 'LR_L2', 'LR_E', 'NB_B', 'NB_G', 'NB_M', 'NB_C', 'SVM_S',
               'SVM_P', 'SVM_R', 'KNN_W', 'KNN_D']
-    #bn_means = [round(mean(bnlearn_linear_dict_scores["dt"]),2), round(mean(bnlearn_linear_dict_scores["dt_e"]),2), round(mean(bnlearn_linear_dict_scores["rf"]),2), round(mean(bnlearn_linear_dict_scores["rf_e"]),2), round(mean(bnlearn_linear_dict_scores["lr"]),2), round(mean(bnlearn_linear_dict_scores["lr_l1"]),2), round(mean(bnlearn_linear_dict_scores["lr_l2"]),2), round(mean(bnlearn_linear_dict_scores["lr_e"]),2), round(mean(bnlearn_linear_dict_scores["nb"]),2), round(mean(bnlearn_linear_dict_scores["nb_g"]),2), round(mean(bnlearn_linear_dict_scores["nb_m"]),2), round(mean(bnlearn_linear_dict_scores["nb_c"]),2), round(mean(bnlearn_linear_dict_scores["svm"]),2), round(mean(bnlearn_linear_dict_scores["svm_po"]),2), round(mean(bnlearn_linear_dict_scores["svm_r"]),2), round(mean(bnlearn_linear_dict_scores["knn"]),2), round(mean(bnlearn_linear_dict_scores["knn_d"]),2)]
-    #nt_means = [round(mean(notears_linear_dict_scores["dt"]),2), round(mean(notears_linear_dict_scores["dt_e"]),2), round(mean(notears_linear_dict_scores["rf"]),2), round(mean(notears_linear_dict_scores["rf_e"]),2), round(mean(notears_linear_dict_scores["lr"]),2), round(mean(notears_linear_dict_scores["lr_l1"]),2), round(mean(notears_linear_dict_scores["lr_l2"]),2), round(mean(notears_linear_dict_scores["lr_e"]),2), round(mean(notears_linear_dict_scores["nb"]),2), round(mean(notears_linear_dict_scores["nb_g"]),2), round(mean(notears_linear_dict_scores["nb_m"]),2), round(mean(notears_linear_dict_scores["nb_c"]),2), round(mean(notears_linear_dict_scores["svm"]),2), round(mean(notears_linear_dict_scores["svm_po"]),2), round(mean(notears_linear_dict_scores["svm_r"]),2), round(mean(notears_linear_dict_scores["knn"]),2), round(mean(notears_linear_dict_scores["knn_d"]),2)]
 
-    x = np.arange(len(labels))  # the label locations
-    width = 2  # the width of the bars
+    #linear benchmarks
+    bn_hc_linear_means, bn_tabu_linear_means, bn_mmhc_linear_means, bn_rsmax2_linear_means = [], [], [], []
+    nt_log_linear_means, nt_l2_linear_means, nt_p_linear_means = [], [], []
+    p_e_linear_means, p_g_linear_means = [], []
+    pgmpy_tree_linear_means, pgmpy_hc_linear_means, pgmpy_mmhc_linear_means = [], [], []
 
-    fig, ax = plt.subplots()
-    #rects1 = ax.bar(x - width / 2, bn_means, width, label='NO')
-    #rects2 = ax.bar(x + width / 2, nt_means, width, label='NO_TEARS')
+    # Nonlinear benchmarks
+    bn_hc_nonlinear_means, bn_tabu_nonlinear_means, bn_mmhc_nonlinear_means, bn_rsmax2_nonlinear_means = [], [], [], []
+    nt_log_nonlinear_means, nt_l2_nonlinear_means, nt_p_nonlinear_means = [], [], []
+    p_e_nonlinear_means, p_g_nonlinear_means = [], []
+    pgmpy_tree_nonlinear_means, pgmpy_hc_nonlinear_means, pgmpy_mmhc_nonlinear_means = [], [], []
 
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Accuracy')
-    ax.set_title('Linear Problem - Performance by library on ML technique')
-    ax.set_xticks(x, labels)
-    ax.legend()
+    # Sparse benchmarks
+    bn_hc_sparse_means, bn_tabu_sparse_means, bn_mmhc_sparse_means, bn_rsmax2_sparse_means = [], [], [], []
+    nt_log_sparse_means, nt_l2_sparse_means, nt_p_sparse_means = [], [], []
+    p_e_sparse_means, p_g_sparse_means = [], []
+    pgmpy_tree_sparse_means, pgmpy_hc_sparse_means, pgmpy_mmhc_sparse_means = [], [], []
 
-    #ax.bar_label(rects1, padding=3)
-    #ax.bar_label(rects2, padding=3)
+    # Dimension benchmarks
+    bn_hc_dimension_means, bn_tabu_dimension_means, bn_mmhc_dimension_means, bn_rsmax2_dimension_means = [], [], [], []
+    nt_log_dimension_means, nt_l2_dimension_means, nt_p_dimension_means = [], [], []
+    p_e_dimension_means, p_g_dimension_means = [], []
+    pgmpy_tree_dimension_means, pgmpy_hc_dimension_means, pgmpy_mmhc_dimension_means = [], [], []
+    for k, v in learned_results.items():
+        if k.split('_')[-2] == "linear":
+            if k.split('_')[-3] == "bnlearn-hc":
+                bn_hc_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-tabu":
+                bn_tabu_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-mmhc":
+                bn_mmhc_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-rsmax2":
+                bn_rsmax2_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-logistic":
+                nt_log_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-l2":
+                nt_l2_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-poisson":
+                nt_p_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-hc":
+                pgmpy_hc_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-tree":
+                pgmpy_tree_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-mmhc":
+                pgmpy_mmhc_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pomegranate-exact":
+                p_e_linear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pomegranate-greedy":
+                p_g_linear_means.append(learned_results[k])
+        elif k.split('_')[-2] == "non-linear":
+            if k.split('_')[-3] == "bnlearn-hc":
+                bn_hc_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-tabu":
+                bn_tabu_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-mmhc":
+                bn_mmhc_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-rsmax2":
+                bn_rsmax2_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-logistic":
+                nt_log_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-l2":
+                nt_l2_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-poisson":
+                nt_p_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-hc":
+                pgmpy_hc_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-tree":
+                pgmpy_tree_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-mmhc":
+                pgmpy_mmhc_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pomegranate-exact":
+                p_e_nonlinear_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pomegranate-greedy":
+                p_g_nonlinear_means.append(learned_results[k])
+        elif k.split('_')[-2] == "sparse":
+            if k.split('_')[-3] == "bnlearn-hc":
+                bn_hc_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-tabu":
+                bn_tabu_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-mmhc":
+                bn_mmhc_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-rsmax2":
+                bn_rsmax2_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-logistic":
+                nt_log_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-l2":
+                nt_l2_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-poisson":
+                nt_p_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-hc":
+                pgmpy_hc_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-tree":
+                pgmpy_tree_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-mmhc":
+                pgmpy_mmhc_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pomegranate-exact":
+                p_e_sparse_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pomegranate-greedy":
+                p_g_sparse_means.append(learned_results[k])
+        elif k.split('_')[-2] == "dimension":
+            if k.split('_')[-3] == "bnlearn-hc":
+                bn_hc_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-tabu":
+                bn_tabu_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-mmhc":
+                bn_mmhc_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "bnlearn-rsmax2":
+                bn_rsmax2_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-logistic":
+                nt_log_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-l2":
+                nt_l2_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "notears-poisson":
+                nt_p_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-hc":
+                pgmpy_hc_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-tree":
+                pgmpy_tree_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pgmpy-mmhc":
+                pgmpy_mmhc_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pomegranate-exact":
+                p_e_dimension_means.append(learned_results[k])
+            elif k.split('_')[-3] == "pomegranate-greedy":
+                p_g_dimension_means.append(learned_results[k])
 
-    fig.set_size_inches(15, 15)
-    fig.tight_layout()
-    plt.savefig('pipeline_summary_benchmark_by_library_bargraph.png')
+    plt.rcParams["figure.figsize"] = [18, 18]
+    plt.rcParams["figure.autolayout"] = True
+    x_axis = np.arange(len(labels))
+    w = 0.05  # the width of the bars
+    plt.bar(x_axis + w, bn_hc_linear_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, bn_tabu_linear_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_linear_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_linear_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, nt_log_linear_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 6, nt_l2_linear_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 7, nt_p_linear_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 8, p_e_linear_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 9, p_g_linear_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 10, pgmpy_mmhc_linear_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 11, pgmpy_hc_linear_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 12, pgmpy_tree_linear_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.style.use("fivethirtyeight")
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Linear Problem - Performance by library on ML technique')
+    plt.ylim(0.0, 1)
+    plt.savefig('pipeline_summary_benchmark_for_linear_by_library_groupbar.png', bbox_inches='tight')
     plt.show()
 
-#write_real_to_figures()
+    # Produce Non-Linear Problem by Library on Problem Group by figure
+    plt.bar(x_axis + w, bn_hc_nonlinear_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, bn_tabu_nonlinear_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_nonlinear_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_nonlinear_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, nt_log_nonlinear_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 6, nt_l2_nonlinear_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 7, nt_p_nonlinear_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 8, p_e_nonlinear_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 9, p_g_nonlinear_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 10, pgmpy_mmhc_nonlinear_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 11, pgmpy_hc_nonlinear_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 12, pgmpy_tree_nonlinear_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Non-Linear Problem - Performance by library on ML technique')
+    plt.ylim(0.0, 1)
+    plt.savefig('pipeline_summary_benchmark_for_nonlinear_by_library_groupbar.png', bbox_inches='tight')
+    plt.show()
+
+    # Produce Sparse Problem by Library on Problem Group by figure
+    plt.bar(x_axis + w, bn_hc_sparse_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, bn_tabu_sparse_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_sparse_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_sparse_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, nt_log_sparse_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 6, nt_l2_sparse_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 7, nt_p_sparse_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 8, p_e_sparse_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 9, p_g_sparse_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 10, pgmpy_mmhc_sparse_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 11, pgmpy_hc_sparse_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 12, pgmpy_tree_sparse_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Sparse Problem - Performance by library on ML technique')
+    plt.ylim(0.0, 1)
+    plt.savefig('pipeline_summary_benchmark_for_sparse_by_library_groupbar.png', bbox_inches='tight')
+    plt.show()
+
+    # Produce Dimensional Problem by Library on Problem Group by figure
+    plt.bar(x_axis + w, bn_hc_dimension_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, bn_tabu_dimension_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_dimension_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_dimension_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, nt_log_dimension_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 6, nt_l2_dimension_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 7, nt_p_dimension_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 8, p_e_dimension_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 9, p_g_dimension_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 10, pgmpy_mmhc_dimension_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 11, pgmpy_hc_dimension_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 12, pgmpy_tree_dimension_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Dimensional Problem - Performance by library on ML technique')
+    plt.ylim(0.0, 1)
+    plt.savefig('pipeline_summary_benchmark_for_dimensional_by_library_groupbar.png', bbox_inches='tight')
+    plt.show()
+
+write_results_to_figures()
 
 def prediction_real_learned():
+    '''
+    Reports the comparative recommendation of ML method from SimCal benchmarks between real and learned worlds
+    '''
     #List with values and loop
-
     print("#### SimCal Real/Learned-world Predictions ####")
-
     print("-- Exact (1-1) max(rank) output")
-    #real_linear_workflows = {'Decision Tree (gini)': max(real_linear_dt_scores), 'Decision Tree (entropy)': max(real_linear_dt_entropy_scores), 'Random Forest (gini)': max(real_linear_rf_scores), 'Random Forest (entropy)': max(real_linear_rf_entropy_scores),'Logistic Regression (none)': max(real_linear_lr_scores), 'Logistic Regression (l1)': max(real_linear_lr_l1_scores), 'Logistic Regression (l2)': max(real_linear_lr_l2_scores), 'Logistic Regression (elasticnet)': max(real_linear_lr_elastic_scores), 'Naive Bayes (bernoulli)': max(real_linear_gb_scores), 'Naive Bayes (multinomial)': max(real_linear_gb_multi_scores), 'Naive Bayes (gaussian)': max(real_linear_gb_gaussian_scores), 'Naive Bayes (complement)': max(real_linear_gb_complement_scores), 'Support Vector Machine (sigmoid)': max(real_linear_svm_scores), 'Support Vector Machine (polynomial)': max(real_linear_svm_poly_scores), 'Support Vector Machine (rbf)': max(real_linear_svm_rbf_scores), 'K Nearest Neighbor (uniform)': max(real_linear_knn_scores), 'K Nearest Neighbor (distance)': max(real_linear_knn_distance_scores)}
-    #top_real_linear = max(real_linear_workflows, key=real_linear_workflows.get)
-    #print("Real world - Linear problem, Prediction: ", top_real_linear)
-    #sim_linear_workflows = {'BN Decision Tree (gini)': max(bnlearn_linear_dict_scores["dt"]), 'BN Decision Tree (entropy)': max(bnlearn_linear_dict_scores["dt_e"]),'NT Decision Tree (gini)': max(notears_linear_dict_scores["dt"]),'NT Decision Tree (entropy)': max(notears_linear_dict_scores["dt_e"]), 'BN Random Forest (gini)': max(bnlearn_linear_dict_scores["rf"]), 'BN Random Forest (entropy)': max(bnlearn_linear_dict_scores["rf_e"]),'NT Random Forest (gini)': max(notears_linear_dict_scores["rf"]),'NT Random Forest (entropy)': max(notears_linear_dict_scores["rf_e"]),'BN Logistic Regression (none)': max(bnlearn_linear_dict_scores["lr"]),'BN Logistic Regression (l1)': max(bnlearn_linear_dict_scores["lr_l1"]),'BN Logistic Regression (l2)': max(bnlearn_linear_dict_scores["lr_l2"]),'BN Logistic Regression (elastic)': max(bnlearn_linear_dict_scores["lr_e"]), 'NT Logistic Regression (none)': max(notears_linear_dict_scores["lr"]),  'NT Logistic Regression (l1)': max(notears_linear_dict_scores["lr_l1"]), 'NT Logistic Regression (l2)': max(notears_linear_dict_scores["lr_l2"]), 'NT Logistic Regression (elastic)': max(notears_linear_dict_scores["lr_e"]),'BN Naive Bayes (bernoulli)': max(bnlearn_linear_dict_scores["nb"]),'BN Naive Bayes (gaussian)': max(bnlearn_linear_dict_scores["nb_g"]),'BN Naive Bayes (multinomial)': max(bnlearn_linear_dict_scores["nb_m"]),'BN Naive Bayes (complement)': max(bnlearn_linear_dict_scores["nb_c"]), 'NT Naive Bayes (bernoulli)': max(notears_linear_dict_scores["nb"]),'NT Naive Bayes (gaussian)': max(notears_linear_dict_scores["nb_g"]),'NT Naive Bayes (multinomial)': max(notears_linear_dict_scores["nb_m"]),'NT Naive Bayes (complement)': max(notears_linear_dict_scores["nb_c"]), 'BN Support Vector Machine (sigmoid)': max(bnlearn_linear_dict_scores["svm"]), 'BN Support Vector Machine (polynomial)': max(bnlearn_linear_dict_scores["svm_po"]), 'BN Support Vector Machine (rbf)': max(bnlearn_linear_dict_scores["svm_r"]), 'NT Support Vector Machine (sigmoid)': max(notears_linear_dict_scores["svm"]),'NT Support Vector Machine (polynomial)': max(notears_linear_dict_scores["svm_po"]),'NT Support Vector Machine (rbf)': max(notears_linear_dict_scores["svm_r"]), 'BN K Nearest Neighbor (weight)': max(bnlearn_linear_dict_scores["knn"]),'BN K Nearest Neighbor (distance)': max(bnlearn_linear_dict_scores["knn_d"]),'NT K Nearest Neighbor (weight)': max(notears_linear_dict_scores["knn"]), 'NT K Nearest Neighbor (distance)': max(notears_linear_dict_scores["knn_d"])}
-    #top_learned_linear = max(sim_linear_workflows, key=sim_linear_workflows.get)
-    #print("Learned world - Linear problem, Prediction: ", top_learned_linear)
+    top_real_linear = top_learned_linear = top_real_nonlinear = top_learned_nonlinear = top_real_sparse = top_learned_sparse = top_real_dimensional = top_learned_dimensional = 0
+    top_real_linear_label = top_learned_linear_label = top_real_nonlinear_label = top_learned_nonlinear_label = top_real_sparse_label = top_learned_sparse_label = top_real_dimensional_label = top_learned_dimensional_label = ""
 
-    #real_nonlinear_workflows = {'Decision Tree (gini)': max(real_nonlinear_dt_scores),
-    #                         'Decision Tree (entropy)': max(real_nonlinear_dt_entropy_scores),
-    #                         'Random Forest (gini)': max(real_nonlinear_rf_scores),
-    #                         'Random Forest (entropy)': max(real_nonlinear_rf_entropy_scores),
-    #                         'Logistic Regression (none)': max(real_nonlinear_lr_scores),
-    #                         'Logistic Regression (l1)': max(real_nonlinear_lr_l1_scores),
-    #                         'Logistic Regression (l2)': max(real_nonlinear_lr_l2_scores),
-    #                         'Logistic Regression (elasticnet)': max(real_nonlinear_lr_elastic_scores),
-    #                         'Naive Bayes (bernoulli)': max(real_nonlinear_gb_scores),
-    #                         'Naive Bayes (multinomial)': max(real_nonlinear_gb_multi_scores),
-    #                         'Naive Bayes (gaussian)': max(real_nonlinear_gb_gaussian_scores),
-    #                         'Naive Bayes (complement)': max(real_nonlinear_gb_complement_scores),
-    #                         'Support Vector Machine (sigmoid)': max(real_nonlinear_svm_scores),
-    #                         'Support Vector Machine (polynomial)': max(real_nonlinear_svm_poly_scores),
-    #                         'Support Vector Machine (rbf)': max(real_nonlinear_svm_rbf_scores),
-    #                         'K Nearest Neighbor (uniform)': max(real_nonlinear_knn_scores),
-    #                         'K Nearest Neighbor (distance)': max(real_nonlinear_knn_distance_scores)}
-    #top_real_nonlinear = max(real_nonlinear_workflows, key=real_nonlinear_workflows.get)
-    #print("Real world - Nonlinear problem, Prediction: ", top_real_nonlinear)
-    #sim_nonlinear_workflows = {'BN Decision Tree (gini)': max(bnlearn_nonlinear_dict_scores["dt"]),
-    #                        'BN Decision Tree (entropy)': max(bnlearn_nonlinear_dict_scores["dt_e"]),
-    #                        'NT Decision Tree (gini)': max(notears_nonlinear_dict_scores["dt"]),
-    #                        'NT Decision Tree (entropy)': max(notears_nonlinear_dict_scores["dt_e"]),
-    #                        'BN Random Forest (gini)': max(bnlearn_nonlinear_dict_scores["rf"]),
-    #                        'BN Random Forest (entropy)': max(bnlearn_nonlinear_dict_scores["rf_e"]),
-    #                        'NT Random Forest (gini)': max(notears_nonlinear_dict_scores["rf"]),
-    #                        'NT Random Forest (entropy)': max(notears_nonlinear_dict_scores["rf_e"]),
-    #                        'BN Logistic Regression (none)': max(bnlearn_nonlinear_dict_scores["lr"]),
-    #                        'BN Logistic Regression (l1)': max(bnlearn_nonlinear_dict_scores["lr_l1"]),
-    #                        'BN Logistic Regression (l2)': max(bnlearn_nonlinear_dict_scores["lr_l2"]),
-    #                        'BN Logistic Regression (elastic)': max(bnlearn_nonlinear_dict_scores["lr_e"]),
-    #                        'NT Logistic Regression (none)': max(notears_nonlinear_dict_scores["lr"]),
-    #                        'NT Logistic Regression (l1)': max(notears_nonlinear_dict_scores["lr_l1"]),
-    #                        'NT Logistic Regression (l2)': max(notears_nonlinear_dict_scores["lr_l2"]),
-    #                        'NT Logistic Regression (elastic)': max(notears_nonlinear_dict_scores["lr_e"]),
-    #                        'BN Naive Bayes (bernoulli)': max(bnlearn_nonlinear_dict_scores["nb"]),
-    #                        'BN Naive Bayes (gaussian)': max(bnlearn_nonlinear_dict_scores["nb_g"]),
-    #                        'BN Naive Bayes (multinomial)': max(bnlearn_nonlinear_dict_scores["nb_m"]),
-    #                        'BN Naive Bayes (complement)': max(bnlearn_nonlinear_dict_scores["nb_c"]),
-    #                        'NT Naive Bayes (bernoulli)': max(notears_nonlinear_dict_scores["nb"]),
-    #                        'NT Naive Bayes (gaussian)': max(notears_nonlinear_dict_scores["nb_g"]),
-    #                        'NT Naive Bayes (multinomial)': max(notears_nonlinear_dict_scores["nb_m"]),
-    #                        'NT Naive Bayes (complement)': max(notears_nonlinear_dict_scores["nb_c"]),
-    #                        'BN Support Vector Machine (sigmoid)': max(bnlearn_nonlinear_dict_scores["svm"]),
-    #                        'BN Support Vector Machine (polynomial)': max(bnlearn_nonlinear_dict_scores["svm_po"]),
-    #                        'BN Support Vector Machine (rbf)': max(bnlearn_nonlinear_dict_scores["svm_r"]),
-    #                        'NT Support Vector Machine (sigmoid)': max(notears_nonlinear_dict_scores["svm"]),
-    #                        'NT Support Vector Machine (polynomial)': max(notears_nonlinear_dict_scores["svm_po"]),
-    #                        'NT Support Vector Machine (rbf)': max(notears_nonlinear_dict_scores["svm_r"]),
-    #                        'BN K Nearest Neighbor (weight)': max(bnlearn_nonlinear_dict_scores["knn"]),
-    #                        'BN K Nearest Neighbor (distance)': max(bnlearn_nonlinear_dict_scores["knn_d"]),
-    #                        'NT K Nearest Neighbor (weight)': max(notears_nonlinear_dict_scores["knn"]),
-    #                        'NT K Nearest Neighbor (distance)': max(notears_nonlinear_dict_scores["knn_d"])}
-    #top_learned_nonlinear = max(sim_nonlinear_workflows, key=sim_nonlinear_workflows.get)
-    #print("Learned world - Nonlinear problem, Prediction: ", top_learned_nonlinear)
+    for k, v in real_results.items():
+        if k.split('_')[-2] == "linear":
+            if real_results[k] > top_real_linear:
+                top_real_linear = real_results[k]
+                top_real_linear_label = k
+        if k.split('_')[-2] == "non-linear":
+            if real_results[k] > top_real_nonlinear:
+                top_real_nonlinear = real_results[k]
+                top_real_nonlinear_label = k
+        if k.split('_')[-2] == "sparse":
+            if real_results[k] > top_real_sparse:
+                top_real_sparse = real_results[k]
+                top_real_sparse_label = k
+        if k.split('_')[-2] == "dimension":
+            if real_results[k] > top_real_dimensional:
+                top_real_dimensional = real_results[k]
+                top_real_dimensional_label = k
 
-    #real_sparse_workflows = {'Decision Tree (gini)': max(real_sparse_dt_scores),
-    #                         'Decision Tree (entropy)': max(real_sparse_dt_entropy_scores),
-    #                         'Random Forest (gini)': max(real_sparse_rf_scores),
-    #                         'Random Forest (entropy)': max(real_sparse_rf_entropy_scores),
-    #                         'Logistic Regression (none)': max(real_sparse_lr_scores),
-    #                         'Logistic Regression (l1)': max(real_sparse_lr_l1_scores),
-    #                         'Logistic Regression (l2)': max(real_sparse_lr_l2_scores),
-    #                         'Logistic Regression (elasticnet)': max(real_sparse_lr_elastic_scores),
-    #                         'Naive Bayes (bernoulli)': max(real_sparse_gb_scores),
-    #                         'Naive Bayes (multinomial)': max(real_sparse_gb_multi_scores),
-    #                         'Naive Bayes (gaussian)': max(real_sparse_gb_gaussian_scores),
-    #                         'Naive Bayes (complement)': max(real_sparse_gb_complement_scores),
-    #                         'Support Vector Machine (sigmoid)': max(real_sparse_svm_scores),
-    #                         'Support Vector Machine (polynomial)': max(real_sparse_svm_poly_scores),
-    #                         'Support Vector Machine (rbf)': max(real_sparse_svm_rbf_scores),
-    #                         'K Nearest Neighbor (uniform)': max(real_sparse_knn_scores),
-    #                         'K Nearest Neighbor (distance)': max(real_sparse_knn_distance_scores)}
-    #top_real_sparse = max(real_sparse_workflows, key=real_sparse_workflows.get)
-    #print("Real world - Sparse problem, Prediction: ", top_real_sparse)
-    #sim_sparse_workflows = {'BN Decision Tree (gini)': max(bnlearn_sparse_dict_scores["dt"]),
-    #                        'BN Decision Tree (entropy)': max(bnlearn_sparse_dict_scores["dt_e"]),
-    #                        'NT Decision Tree (gini)': max(notears_sparse_dict_scores["dt"]),
-    #                        'NT Decision Tree (entropy)': max(notears_sparse_dict_scores["dt_e"]),
-    #                        'BN Random Forest (gini)': max(bnlearn_sparse_dict_scores["rf"]),
-    #                        'BN Random Forest (entropy)': max(bnlearn_sparse_dict_scores["rf_e"]),
-    #                        'NT Random Forest (gini)': max(notears_sparse_dict_scores["rf"]),
-    #                        'NT Random Forest (entropy)': max(notears_sparse_dict_scores["rf_e"]),
-    #                        'BN Logistic Regression (none)': max(bnlearn_sparse_dict_scores["lr"]),
-    #                        'BN Logistic Regression (l1)': max(bnlearn_sparse_dict_scores["lr_l1"]),
-    #                        'BN Logistic Regression (l2)': max(bnlearn_sparse_dict_scores["lr_l2"]),
-    #                        'BN Logistic Regression (elastic)': max(bnlearn_sparse_dict_scores["lr_e"]),
-    #                        'NT Logistic Regression (none)': max(notears_sparse_dict_scores["lr"]),
-    #                        'NT Logistic Regression (l1)': max(notears_sparse_dict_scores["lr_l1"]),
-    #                        'NT Logistic Regression (l2)': max(notears_sparse_dict_scores["lr_l2"]),
-    #                        'NT Logistic Regression (elastic)': max(notears_sparse_dict_scores["lr_e"]),
-    #                        'BN Naive Bayes (bernoulli)': max(bnlearn_sparse_dict_scores["nb"]),
-    #                        'BN Naive Bayes (gaussian)': max(bnlearn_sparse_dict_scores["nb_g"]),
-    #                        'BN Naive Bayes (multinomial)': max(bnlearn_sparse_dict_scores["nb_m"]),
-    #                        'BN Naive Bayes (complement)': max(bnlearn_sparse_dict_scores["nb_c"]),
-    #                        'NT Naive Bayes (bernoulli)': max(notears_sparse_dict_scores["nb"]),
-    #                        'NT Naive Bayes (gaussian)': max(notears_sparse_dict_scores["nb_g"]),
-    #                        'NT Naive Bayes (multinomial)': max(notears_sparse_dict_scores["nb_m"]),
-    #                        'NT Naive Bayes (complement)': max(notears_sparse_dict_scores["nb_c"]),
-    #                        'BN Support Vector Machine (sigmoid)': max(bnlearn_sparse_dict_scores["svm"]),
-    #                        'BN Support Vector Machine (polynomial)': max(bnlearn_sparse_dict_scores["svm_po"]),
-    #                        'BN Support Vector Machine (rbf)': max(bnlearn_sparse_dict_scores["svm_r"]),
-    #                        'NT Support Vector Machine (sigmoid)': max(notears_sparse_dict_scores["svm"]),
-    #                        'NT Support Vector Machine (polynomial)': max(notears_sparse_dict_scores["svm_po"]),
-    #                        'NT Support Vector Machine (rbf)': max(notears_sparse_dict_scores["svm_r"]),
-    #                        'BN K Nearest Neighbor (weight)': max(bnlearn_sparse_dict_scores["knn"]),
-    #                        'BN K Nearest Neighbor (distance)': max(bnlearn_sparse_dict_scores["knn_d"]),
-    #                        'NT K Nearest Neighbor (weight)': max(notears_sparse_dict_scores["knn"]),
-    #                        'NT K Nearest Neighbor (distance)': max(notears_sparse_dict_scores["knn_d"])}
-    #top_learned_sparse = max(sim_sparse_workflows, key=sim_sparse_workflows.get)
-    #print("Learned world - Sparse problem, Prediction: ", top_learned_sparse)
+    for k, v in learned_results.items():
+        if k.split('_')[-2] == "linear":
+            if learned_results[k] > top_learned_linear:
+                top_learned_linear = learned_results[k]
+                top_learned_linear_label = k
+        if k.split('_')[-2] == "non-linear":
+            if learned_results[k] > top_learned_nonlinear:
+                top_learned_nonlinear = learned_results[k]
+                top_learned_nonlinear_label = k
+        if k.split('_')[-2] == "sparse":
+            if learned_results[k] > top_learned_sparse:
+                top_learned_sparse = learned_results[k]
+                top_learned_sparse_label = k
+        if k.split('_')[-2] == "dimension":
+            if learned_results[k] > top_learned_dimensional:
+                top_learned_dimensional = learned_results[k]
+                top_learned_dimensional_label = k
 
-    #real_dimension_workflows = {'Decision Tree (gini)': max(real_dimension_dt_scores),
-    #                         'Decision Tree (entropy)': max(real_dimension_dt_entropy_scores),
-    #                         'Random Forest (gini)': max(real_dimension_rf_scores),
-    #                         'Random Forest (entropy)': max(real_dimension_rf_entropy_scores),
-    #                         'Logistic Regression (none)': max(real_dimension_lr_scores),
-    #                         'Logistic Regression (l1)': max(real_dimension_lr_l1_scores),
-    #                         'Logistic Regression (l2)': max(real_dimension_lr_l2_scores),
-    #                         'Logistic Regression (elasticnet)': max(real_dimension_lr_elastic_scores),
-    #                         'Naive Bayes (bernoulli)': max(real_dimension_gb_scores),
-    #                         'Naive Bayes (multinomial)': max(real_dimension_gb_multi_scores),
-    #                         'Naive Bayes (gaussian)': max(real_dimension_gb_gaussian_scores),
-    #                         'Naive Bayes (complement)': max(real_dimension_gb_complement_scores),
-    #                         'Support Vector Machine (sigmoid)': max(real_dimension_svm_scores),
-    #                         'Support Vector Machine (polynomial)': max(real_dimension_svm_poly_scores),
-    #                         'Support Vector Machine (rbf)': max(real_dimension_svm_rbf_scores),
-    #                         'K Nearest Neighbor (uniform)': max(real_dimension_knn_scores),
-    #                         'K Nearest Neighbor (distance)': max(real_dimension_knn_distance_scores)}
-    #top_real_dimension = max(real_dimension_workflows, key=real_dimension_workflows.get)
-    #print("Real world - Dimensional problem, Prediction: ", top_real_dimension)
-    #sim_dimension_workflows = {'BN Decision Tree (gini)': max(bnlearn_dimension_dict_scores["dt"]),
-    #                        'BN Decision Tree (entropy)': max(bnlearn_dimension_dict_scores["dt_e"]),
-    #                        'NT Decision Tree (gini)': max(notears_dimension_dict_scores["dt"]),
-    #                        'NT Decision Tree (entropy)': max(notears_dimension_dict_scores["dt_e"]),
-    #                        'BN Random Forest (gini)': max(bnlearn_dimension_dict_scores["rf"]),
-    #                        'BN Random Forest (entropy)': max(bnlearn_dimension_dict_scores["rf_e"]),
-    #                        'NT Random Forest (gini)': max(notears_dimension_dict_scores["rf"]),
-    #                        'NT Random Forest (entropy)': max(notears_dimension_dict_scores["rf_e"]),
-    #                        'BN Logistic Regression (none)': max(bnlearn_dimension_dict_scores["lr"]),
-    #                        'BN Logistic Regression (l1)': max(bnlearn_dimension_dict_scores["lr_l1"]),
-    #                        'BN Logistic Regression (l2)': max(bnlearn_dimension_dict_scores["lr_l2"]),
-    #                        'BN Logistic Regression (elastic)': max(bnlearn_dimension_dict_scores["lr_e"]),
-    #                        'NT Logistic Regression (none)': max(notears_dimension_dict_scores["lr"]),
-    #                        'NT Logistic Regression (l1)': max(notears_dimension_dict_scores["lr_l1"]),
-    #                        'NT Logistic Regression (l2)': max(notears_dimension_dict_scores["lr_l2"]),
-    #                        'NT Logistic Regression (elastic)': max(notears_dimension_dict_scores["lr_e"]),
-    #                        'BN Naive Bayes (bernoulli)': max(bnlearn_dimension_dict_scores["nb"]),
-    #                        'BN Naive Bayes (gaussian)': max(bnlearn_dimension_dict_scores["nb_g"]),
-    #                        'BN Naive Bayes (multinomial)': max(bnlearn_dimension_dict_scores["nb_m"]),
-    #                        'BN Naive Bayes (complement)': max(bnlearn_dimension_dict_scores["nb_c"]),
-    #                        'NT Naive Bayes (bernoulli)': max(notears_dimension_dict_scores["nb"]),
-    #                        'NT Naive Bayes (gaussian)': max(notears_dimension_dict_scores["nb_g"]),
-    #                        'NT Naive Bayes (multinomial)': max(notears_dimension_dict_scores["nb_m"]),
-    #                        'NT Naive Bayes (complement)': max(notears_dimension_dict_scores["nb_c"]),
-    #                        'BN Support Vector Machine (sigmoid)': max(bnlearn_dimension_dict_scores["svm"]),
-    #                        'BN Support Vector Machine (polynomial)': max(bnlearn_dimension_dict_scores["svm_po"]),
-    #                        'BN Support Vector Machine (rbf)': max(bnlearn_dimension_dict_scores["svm_r"]),
-    #                        'NT Support Vector Machine (sigmoid)': max(notears_dimension_dict_scores["svm"]),
-    #                        'NT Support Vector Machine (polynomial)': max(notears_dimension_dict_scores["svm_po"]),
-    #                        'NT Support Vector Machine (rbf)': max(notears_dimension_dict_scores["svm_r"]),
-    #                        'BN K Nearest Neighbor (weight)': max(bnlearn_dimension_dict_scores["knn"]),
-    #                        'BN K Nearest Neighbor (distance)': max(bnlearn_dimension_dict_scores["knn_d"]),
-    #                        'NT K Nearest Neighbor (weight)': max(notears_dimension_dict_scores["knn"]),
-    #                        'NT K Nearest Neighbor (distance)': max(notears_dimension_dict_scores["knn_d"])}
-    #top_learned_dimension = max(sim_dimension_workflows, key=sim_dimension_workflows.get)
-    #print("Learned world - Dimensional problem, Prediction: ", top_learned_dimension)
-
-    #print("Relative (point-based) rank output")
-
-    #workflows = {'Decision Tree': real_nonlinear_dt, 'Random Forest': real_nonlinear_rf,
-    #             'Logistic Regression': real_nonlinear_lr, 'Naive Bayes': real_nonlinear_gb,
-    #             'Support Vector Machine': real_nonlinear_svm, 'K Nearest Neighbor': real_nonlinear_knn}
-    #top_real = max(workflows, key=workflows.get)
-    #print("Real world - Non-Linear ground truth, Prediction ", top_real)
-    #workflows = {'BN Decision Tree': bnlearn_nonlinear_dt, 'NT Decision Tree': notears_nonlinear_dt,
-    #             'BN Random Forest': bnlearn_nonlinear_rf, 'NT Random Forest': notears_nonlinear_rf,
-    #             'BN Logistic Regression': bnlearn_nonlinear_lr, 'NT Logistic Regression': notears_nonlinear_lr,
-    #             'BN Naive Bayes': bnlearn_nonlinear_nb, 'NT Naive Bayes': notears_nonlinear_nb,
-    #             'BN Support Vector Machine': bnlearn_nonlinear_svm, 'NT Support Vector Machine': notears_nonlinear_svm,
-    #             'BN K Nearest Neighbor': bnlearn_nonlinear_knn, 'NT K Nearest Neighbor': notears_nonlinear_knn}
-    #top_learned = max(workflows, key=workflows.get)
-    #print("Learned world - Non-Linear, Prediction ", top_learned)
-    #workflows = {'Decision Tree': real_sparse_dt, 'Random Forest': real_sparse_rf,
-    #             'Logistic Regression': real_sparse_lr, 'Naive Bayes': real_sparse_gb,
-    #             'Support Vector Machine': real_sparse_svm, 'K Nearest Neighbor': real_sparse_knn}
-    #top_real = max(workflows, key=workflows.get)
-    #print("Real world - Sparse ground truth, Prediction ", top_real)
-    #workflows = {'BN Decision Tree': bnlearn_sparse_dt, 'NT Decision Tree': notears_sparse_dt,
-    #             'BN Random Forest': bnlearn_sparse_rf, 'NT Random Forest': notears_sparse_rf,
-    #             'BN Logistic Regression': bnlearn_sparse_lr, 'NT Logistic Regression': notears_sparse_lr,
-    #             'BN Naive Bayes': bnlearn_sparse_nb, 'NT Naive Bayes': notears_sparse_nb,
-    #             'BN Support Vector Machine': bnlearn_sparse_svm, 'NT Support Vector Machine': notears_sparse_svm,
-    #             'BN K Nearest Neighbor': bnlearn_sparse_knn, 'NT K Nearest Neighbor': notears_sparse_knn}
-    #top_learned = max(workflows, key=workflows.get)
-    #print("Learned world - Sparse, Prediction ", top_learned)
+    print("Real world - Linear problem, Prediction: " + top_real_linear_label + " ("+ str(top_real_linear)+")")
+    print("Learned world - Linear problem, Prediction: "+ top_learned_linear_label + " (" +str(top_learned_linear)+")")
+    print("Real world - Non-Linear problem, Prediction: " + top_real_nonlinear_label + " (" + str(top_real_nonlinear) + ")")
+    print("Learned world - Non-Linear problem, Prediction: " + top_learned_nonlinear_label + " (" + str(top_learned_nonlinear) + ")")
+    print("Real world - Sparse problem, Prediction: " + top_real_sparse_label + " (" + str(top_real_sparse) + ")")
+    print("Learned world - Sparse problem, Prediction: " + top_learned_sparse_label + " (" + str(top_learned_sparse) + ")")
+    print("Real world - Dimensional problem, Prediction: " + top_real_dimensional_label + " (" + str(top_real_dimensional) + ")")
+    print("Learned world - Dimensional problem, Prediction: " + top_learned_dimensional_label + " (" + str(top_learned_dimensional) + ")")
 
 real_experiment_summary = pd.read_csv("real_experiments_summary.csv")
 real_experiment_summary
