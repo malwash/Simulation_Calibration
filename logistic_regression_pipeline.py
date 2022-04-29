@@ -18,6 +18,7 @@ from statistics import mean
 from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
+import scipy.stats
 import matplotlib.pyplot as plt
 import csv
 import simulation_notears
@@ -35,6 +36,11 @@ from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.vectors import DataFrame, StrVector
 from rpy2.robjects.packages import importr
+import pingouin as pg
+import seaborn as sns
+
+all_corr_real = []
+all_corr_learned = []
 
 TRAIN_SIZE = 1000
 TEST_SIZE = 1000
@@ -71,22 +77,9 @@ def get_data_from_real_world(pipeline_type, num_train, num_test, world=None, dat
     :param num_test the number of samples for testing
     :return: sliced train and test data
     '''
-    # if data is None:
-    #     if world!="real":
-    #             raise("For learning a world, data are needed")
-    #     else:
-    #         train, test = simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-    # else:
-    #     if world=="real":
-    #         raise("world==real with data are not allowed")
-    #     elif world=="notears":
-    #         train, test = simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
-    #     elif world=="bnlearn":
-    #         train, test = simulation_dagsim.setup_realworld(pipeline_type, 1000, 5000)
     train, test = simulation_dagsim.setup_realworld(pipeline_type, num_train, num_test)
     x_train, y_train, x_test, y_test = slice_data(pipeline_type, train, test)
     return x_train, y_train, x_test, y_test
-
 
 def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test, pipeline_type):
     '''
@@ -451,10 +444,15 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
         clf = MLModels[key]
         clf = clf.fit(x_train_rdy, y_train)
         y_pred = clf.predict(x_test_rdy)
-        scores[f'{world}_{pipeline_name}_{key}'] = metrics.accuracy_score(y_test,y_pred)
+        scores[f'{world}_{pipeline_name}_{key}'] = metrics.balanced_accuracy_score(y_test,y_pred)
+    joined_dataset = pd.DataFrame(np.concatenate((x_train_rdy, y_train.T[:, None]), axis = 1))
+    if world == "real" and pipeline_type == 4:
+        all_corr_real.append(pg.pairwise_corr(joined_dataset)["r"])
+    elif "bnlearn" in world and pipeline_type == 4 or "notears" in world and pipeline_type == 4 or "pgmpy" in world and pipeline_type == 4 or "pomegranate" in world and pipeline_type == 4:
+        all_corr_learned.append(pg.pairwise_corr(joined_dataset)["r"])
     return scores
 
-def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test):
+def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test, test_source):
     '''
     Runs through all parameter sets in structural learners, and performs benchmarking on learned data
     :param pipeline_type:
@@ -470,26 +468,57 @@ def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test):
     pomegranate_algorithms = ["exact", "greedy"]
     bnlearn_algorithms = ["hc", "tabu", "mmhc", "rsmax2"]
     results = {}
-    for loss in notears_loss:
-        print(loss)
-        x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("notears", loss, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
-        scores = world_evaluate("notears"+"-"+loss, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
-        results.update(scores)
-    for algorithm in pgmpy_algorithms:
-        print(algorithm)
-        x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pgmpy", algorithm, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
-        scores = world_evaluate("pgmpy"+"-"+algorithm, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
-        results.update(scores)
-    for algorithm in pomegranate_algorithms:
-        print(algorithm)
-        x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pomegranate", algorithm, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
-        scores = world_evaluate("pomegranate"+"-"+algorithm, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
-        results.update(scores)
-    for algorithm in bnlearn_algorithms:
-        print(algorithm)
-        x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("bnlearn", algorithm, np.concatenate([x_train[:100], y_train.reshape([-1,1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
-        scores = world_evaluate("bnlearn"+"-"+algorithm, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
-        results.update(scores)
+    if test_source == "real":
+        for loss in notears_loss:
+            print(loss)
+            x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("notears", loss, np.concatenate(
+                [x_train[:100], y_train.reshape([-1, 1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+            scores = world_evaluate("notears" + "-" + loss, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
+            results.update(scores)
+        for algorithm in pgmpy_algorithms:
+            print(algorithm)
+            x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pgmpy", algorithm, np.concatenate(
+                [x_train[:100], y_train.reshape([-1, 1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+            scores = world_evaluate("pgmpy" + "-" + algorithm, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
+            results.update(scores)
+        for algorithm in pomegranate_algorithms:
+            print(algorithm)
+            x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("pomegranate", algorithm, np.concatenate(
+                [x_train[:100], y_train.reshape([-1, 1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+            scores = world_evaluate("pomegranate" + "-" + algorithm, pipeline_type, x_train_lr, y_train_lr, x_test,
+                                    y_test)
+            results.update(scores)
+        for algorithm in bnlearn_algorithms:
+            print(algorithm)
+            x_train_lr, y_train_lr, _, _ = get_data_from_learned_world("bnlearn", algorithm, np.concatenate(
+                [x_train[:100], y_train.reshape([-1, 1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+            scores = world_evaluate("bnlearn" + "-" + algorithm, pipeline_type, x_train_lr, y_train_lr, x_test, y_test)
+            results.update(scores)
+    elif test_source == "learned":
+        for loss in notears_loss:
+            print(loss)
+            x_train_lr, y_train_lr, x_test_lr, y_test_lr = get_data_from_learned_world("notears", loss, np.concatenate(
+                [x_train[:100], y_train.reshape([-1, 1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+            scores = world_evaluate("notears" + "-" + loss, pipeline_type, x_train_lr, y_train_lr, x_test_lr, y_test_lr)
+            results.update(scores)
+        for algorithm in pgmpy_algorithms:
+            print(algorithm)
+            x_train_lr, y_train_lr, x_test_lr, y_test_lr = get_data_from_learned_world("pgmpy", algorithm, np.concatenate(
+                [x_train[:100], y_train.reshape([-1, 1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+            scores = world_evaluate("pgmpy" + "-" + algorithm, pipeline_type, x_train_lr, y_train_lr, x_test_lr, y_test_lr)
+            results.update(scores)
+        for algorithm in pomegranate_algorithms:
+            print(algorithm)
+            x_train_lr, y_train_lr, x_test_lr, y_test_lr = get_data_from_learned_world("pomegranate", algorithm, np.concatenate(
+                [x_train[:100], y_train.reshape([-1, 1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+            scores = world_evaluate("pomegranate" + "-" + algorithm, pipeline_type, x_train_lr, y_train_lr, x_test_lr, y_test_lr)
+            results.update(scores)
+        for algorithm in bnlearn_algorithms:
+            print(algorithm)
+            x_train_lr, y_train_lr, x_test_lr, y_test_lr = get_data_from_learned_world("bnlearn", algorithm, np.concatenate(
+                [x_train[:100], y_train.reshape([-1, 1])[:100]], axis=1), TRAIN_SIZE, TEST_SIZE, pipeline_type)
+            scores = world_evaluate("bnlearn" + "-" + algorithm, pipeline_type, x_train_lr, y_train_lr, x_test_lr, y_test_lr)
+            results.update(scores)
     return results
 
 def run_all():
@@ -499,16 +528,20 @@ def run_all():
     '''
     results_real = {}
     results_learned = {}
+    results_learned_test = {}
     for pipeline_type in range(1,5):
         print(f'pipeline type: {pipeline_type}')
         x_train, y_train, x_test, y_test = get_data_from_real_world(pipeline_type, TRAIN_SIZE, TEST_SIZE)
         scores_real = world_evaluate("real", pipeline_type, x_train, y_train, x_test, y_test)
         print("Finished benchmarking Real-world scores")
         results_real.update(scores_real)
-        scores_learned = evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test)
-        print("Finished benchmarking Learned-world scores")
+        scores_learned = evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test, "real")
+        print("Finished benchmarking Learned-world scores - test-set from real world")
         results_learned.update(scores_learned)
-    return results_real, results_learned
+        scores_learned_test = evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test, "learned")
+        print("Finished benchmarking Learned-world scores - test-set from learned world")
+        results_learned_test.update(scores_learned_test)
+    return results_real, results_learned, results_learned_test
 
 def write_results_to_csv():
     '''
@@ -533,10 +566,12 @@ def write_results_to_csv():
             elif k.split('_')[-2] == "dimension":
                 thewriter.writerow({fieldnames[0]: k.split('_')[-2], fieldnames[1]: k.split('_')[-3], fieldnames[2]: k.split('_')[-1], fieldnames[3]: learned_results[k]})
 
-global real_results, learned_results #move these to a main call section
-real_results, learned_results = run_all()
+
+global real_results, learned_results, learned_results_test
+real_results, learned_results, learned_results_test = run_all()
 print(real_results)
 print(learned_results)
+print(learned_results_test)
 write_results_to_csv()
 
 #refactor into list of calibrations and then iterate through list and designate benchmarks
@@ -572,6 +607,32 @@ def write_results_to_figures():
     nt_log_dimension_means, nt_l2_dimension_means, nt_p_dimension_means = [], [], []
     p_e_dimension_means, p_g_dimension_means = [], []
     pgmpy_tree_dimension_means, pgmpy_hc_dimension_means, pgmpy_mmhc_dimension_means = [], [], []
+
+    # Benchmarks from the test-set being from learned world
+    # linear benchmarks
+    bn_hc_linear_test_means, bn_tabu_linear_test_means, bn_mmhc_linear_test_means, bn_rsmax2_linear_test_means = [], [], [], []
+    nt_log_linear_test_means, nt_l2_linear_test_means, nt_p_linear_test_means = [], [], []
+    p_e_linear_test_means, p_g_linear_test_means = [], []
+    pgmpy_tree_linear_test_means, pgmpy_hc_linear_test_means, pgmpy_mmhc_linear_test_means = [], [], []
+
+    # Nonlinear benchmarks
+    bn_hc_nonlinear_test_means, bn_tabu_nonlinear_test_means, bn_mmhc_nonlinear_test_means, bn_rsmax2_nonlinear_test_means = [], [], [], []
+    nt_log_nonlinear_test_means, nt_l2_nonlinear_test_means, nt_p_nonlinear_test_means = [], [], []
+    p_e_nonlinear_test_means, p_g_nonlinear_test_means = [], []
+    pgmpy_tree_nonlinear_test_means, pgmpy_hc_nonlinear_test_means, pgmpy_mmhc_nonlinear_test_means = [], [], []
+
+    # Sparse benchmarks
+    bn_hc_sparse_test_means, bn_tabu_sparse_test_means, bn_mmhc_sparse_test_means, bn_rsmax2_sparse_test_means = [], [], [], []
+    nt_log_sparse_test_means, nt_l2_sparse_test_means, nt_p_sparse_test_means = [], [], []
+    p_e_sparse_test_means, p_g_sparse_test_means = [], []
+    pgmpy_tree_sparse_test_means, pgmpy_hc_sparse_test_means, pgmpy_mmhc_sparse_test_means = [], [], []
+
+    # Dimension benchmarks
+    bn_hc_dimension_test_means, bn_tabu_dimension_test_means, bn_mmhc_dimension_test_means, bn_rsmax2_dimension_test_means = [], [], [], []
+    nt_log_dimension_test_means, nt_l2_dimension_test_means, nt_p_dimension_test_means = [], [], []
+    p_e_dimension_test_means, p_g_dimension_test_means = [], []
+    pgmpy_tree_dimension_test_means, pgmpy_hc_dimension_test_means, pgmpy_mmhc_dimension_test_means = [], [], []
+
     for k, v in learned_results.items():
         if k.split('_')[-2] == "linear":
             if k.split('_')[-3] == "bnlearn-hc":
@@ -674,6 +735,109 @@ def write_results_to_figures():
             elif k.split('_')[-3] == "pomegranate-greedy":
                 p_g_dimension_means.append(learned_results[k])
 
+    for k, v in learned_results_test.items():
+        if k.split('_')[-2] == "linear":
+            if k.split('_')[-3] == "bnlearn-hc":
+                bn_hc_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-tabu":
+                bn_tabu_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-mmhc":
+                bn_mmhc_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-rsmax2":
+                bn_rsmax2_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-logistic":
+                nt_log_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-l2":
+                nt_l2_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-poisson":
+                nt_p_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-hc":
+                pgmpy_hc_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-tree":
+                pgmpy_tree_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-mmhc":
+                pgmpy_mmhc_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pomegranate-exact":
+                p_e_linear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pomegranate-greedy":
+                p_g_linear_test_means.append(learned_results_test[k])
+        elif k.split('_')[-2] == "non-linear":
+            if k.split('_')[-3] == "bnlearn-hc":
+                bn_hc_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-tabu":
+                bn_tabu_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-mmhc":
+                bn_mmhc_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-rsmax2":
+                bn_rsmax2_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-logistic":
+                nt_log_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-l2":
+                nt_l2_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-poisson":
+                nt_p_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-hc":
+                pgmpy_hc_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-tree":
+                pgmpy_tree_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-mmhc":
+                pgmpy_mmhc_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pomegranate-exact":
+                p_e_nonlinear_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pomegranate-greedy":
+                p_g_nonlinear_test_means.append(learned_results_test[k])
+        elif k.split('_')[-2] == "sparse":
+            if k.split('_')[-3] == "bnlearn-hc":
+                bn_hc_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-tabu":
+                bn_tabu_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-mmhc":
+                bn_mmhc_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-rsmax2":
+                bn_rsmax2_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-logistic":
+                nt_log_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-l2":
+                nt_l2_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-poisson":
+                nt_p_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-hc":
+                pgmpy_hc_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-tree":
+                pgmpy_tree_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-mmhc":
+                pgmpy_mmhc_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pomegranate-exact":
+                p_e_sparse_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pomegranate-greedy":
+                p_g_sparse_test_means.append(learned_results_test[k])
+        elif k.split('_')[-2] == "dimension":
+            if k.split('_')[-3] == "bnlearn-hc":
+                bn_hc_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-tabu":
+                bn_tabu_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-mmhc":
+                bn_mmhc_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "bnlearn-rsmax2":
+                bn_rsmax2_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-logistic":
+                nt_log_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-l2":
+                nt_l2_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "notears-poisson":
+                nt_p_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-hc":
+                pgmpy_hc_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-tree":
+                pgmpy_tree_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pgmpy-mmhc":
+                pgmpy_mmhc_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pomegranate-exact":
+                p_e_dimension_test_means.append(learned_results_test[k])
+            elif k.split('_')[-3] == "pomegranate-greedy":
+                p_g_dimension_test_means.append(learned_results_test[k])
+
+    # Produce Linear Problem by Library on Problem Group by figure - Testset from real world
     plt.rcParams["figure.figsize"] = [18, 18]
     plt.rcParams["figure.autolayout"] = True
     x_axis = np.arange(len(labels))
@@ -769,6 +933,123 @@ def write_results_to_figures():
     plt.ylim(0.0, 1)
     plt.savefig('pipeline_summary_benchmark_for_dimensional_by_library_groupbar.png', bbox_inches='tight')
     plt.show()
+
+    # Produce Linear Problem by Library on Problem Group by figure - Testset from learned world
+    plt.bar(x_axis + w, bn_hc_linear_test_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, bn_tabu_linear_test_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_linear_test_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_linear_test_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, nt_log_linear_test_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 6, nt_l2_linear_test_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 7, nt_p_linear_test_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 8, p_e_linear_test_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 9, p_g_linear_test_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 10, pgmpy_mmhc_linear_test_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 11, pgmpy_hc_linear_test_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 12, pgmpy_tree_linear_test_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.style.use("fivethirtyeight")
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Linear Problem test-set of learned world- Performance by library on ML technique')
+    plt.ylim(0.0, 1)
+    plt.savefig('pipeline_summary_benchmark_for_linear_test_by_library_groupbar.png', bbox_inches='tight')
+    plt.show()
+
+    # Produce Non-Linear Problem by Library on Problem Group by figure
+    plt.bar(x_axis + w, bn_hc_nonlinear_test_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, bn_tabu_nonlinear_test_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_nonlinear_test_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_nonlinear_test_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, nt_log_nonlinear_test_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 6, nt_l2_nonlinear_test_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 7, nt_p_nonlinear_test_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 8, p_e_nonlinear_test_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 9, p_g_nonlinear_test_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 10, pgmpy_mmhc_nonlinear_test_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 11, pgmpy_hc_nonlinear_test_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 12, pgmpy_tree_nonlinear_test_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Non-Linear Problem test-set of learned world - Performance by library on ML technique')
+    plt.ylim(0.0, 1)
+    plt.savefig('pipeline_summary_benchmark_for_nonlinear_test_by_library_groupbar.png', bbox_inches='tight')
+    plt.show()
+
+    # Produce Sparse Problem by Library on Problem Group by figure
+    plt.bar(x_axis + w, bn_hc_sparse_test_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, bn_tabu_sparse_test_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_sparse_test_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_sparse_test_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, nt_log_sparse_test_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 6, nt_l2_sparse_test_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 7, nt_p_sparse_test_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 8, p_e_sparse_test_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 9, p_g_sparse_test_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 10, pgmpy_mmhc_sparse_test_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 11, pgmpy_hc_sparse_test_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 12, pgmpy_tree_sparse_test_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Sparse Problem test-set of learned world - Performance by library on ML technique')
+    plt.ylim(0.0, 1)
+    plt.savefig('pipeline_summary_benchmark_for_sparse_test_by_library_groupbar.png', bbox_inches='tight')
+    plt.show()
+
+    # Produce Dimensional Problem by Library on Problem Group by figure
+    plt.bar(x_axis + w, bn_hc_dimension_test_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
+    plt.bar(x_axis + w * 2, bn_tabu_dimension_test_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
+    plt.bar(x_axis + w * 3, bn_mmhc_dimension_test_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
+    plt.bar(x_axis + w * 4, bn_rsmax2_dimension_test_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
+    plt.bar(x_axis + w * 5, nt_log_dimension_test_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
+    plt.bar(x_axis + w * 6, nt_l2_dimension_test_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
+    plt.bar(x_axis + w * 7, nt_p_dimension_test_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
+    plt.bar(x_axis + w * 8, p_e_dimension_test_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
+    plt.bar(x_axis + w * 9, p_g_dimension_test_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
+    plt.bar(x_axis + w * 10, pgmpy_mmhc_dimension_test_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
+    plt.bar(x_axis + w * 11, pgmpy_hc_dimension_test_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
+    plt.bar(x_axis + w * 12, pgmpy_tree_dimension_test_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
+
+    plt.xticks(x_axis, labels)
+    plt.legend()
+    plt.ylabel('Accuracy')
+    plt.xlabel('ML Technique', labelpad=15)
+    plt.title('Dimensional Problem test-set of learned world - Performance by library on ML technique')
+    plt.ylim(0.0, 1)
+    plt.savefig('pipeline_summary_benchmark_for_dimensional_test_by_library_groupbar.png', bbox_inches='tight')
+    plt.show()
+
+    #Make comparative correlation figure - Histogram
+    fig = sns.distplot(all_corr_real, hist=True, kde=True, color='darkblue',
+                 hist_kws={'edgecolor': 'black'},
+                 kde_kws={'linewidth': 4}).get_figure()
+    plt.title('Histogram of Correlation Coefficents from the real world')
+    fig.savefig("histogram_coefficent_real.png")
+    plt.show()
+    fig = sns.distplot(all_corr_learned,  hist=True, kde=True, color='darkblue',
+                 hist_kws={'edgecolor': 'black'},
+                 kde_kws={'linewidth': 4}).get_figure()
+    plt.title('Histogram of Correlation Coefficents from the learned world')
+    fig.savefig("histogram_coefficent_learned.png")
+    #Make comparative correlation figure - Scatterplot
+    fig = sns.scatterplot(
+                    data=all_corr_real).get_figure()
+    plt.title('Scatterplot of Correlation Coefficents from the real world')
+    fig.savefig("scatterplot_coefficent_real.png")
+    plt.show()
+    fig = sns.scatterplot(data=all_corr_learned).get_figure()
+    plt.title('Scatterplot of Correlation Coefficents from the learned world')
+    fig.savefig("scatterplot_coefficent_learned.png")
+    plt.show()
+
 
 write_results_to_figures()
 
