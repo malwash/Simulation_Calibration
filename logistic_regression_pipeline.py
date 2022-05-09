@@ -1,6 +1,7 @@
 import random
 import importlib
 
+import pandas
 from pgmpy.estimators import BayesianEstimator, PC, HillClimbSearch, BicScore, TreeSearch, MmhcEstimator
 from pgmpy.models import BayesianModel
 from pomegranate import BayesianNetwork
@@ -39,8 +40,13 @@ from rpy2.robjects.packages import importr
 import pingouin as pg
 import seaborn as sns
 
+coefficent_df_real = pd.DataFrame()
+coefficent_df_learned = pd.DataFrame()
 all_corr_real = []
 all_corr_learned = []
+
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 
 TRAIN_SIZE = 1000
 TEST_SIZE = 1000
@@ -421,6 +427,8 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
     :return: dict with accuracy scores of ML methods with the configuration specified as the key (i.e., world_pipeline_method)
     '''
     # todo what does y_train do
+    global coefficent_df_learned
+    global coefficent_df_real
     scores = {}
     pipeline_name = ["linear", "non-linear", "sparse", "dimension"][pipeline_type-1]
     MLModels = {"DTCgini": DecisionTreeClassifier(criterion='gini'),
@@ -442,14 +450,19 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
             x_train_rdy = min_max_scaler.fit_transform(x_train)
             x_test_rdy = min_max_scaler.transform(x_test)
         clf = MLModels[key]
-        clf = clf.fit(x_train_rdy, y_train)
-        y_pred = clf.predict(x_test_rdy)
-        scores[f'{world}_{pipeline_name}_{key}'] = metrics.balanced_accuracy_score(y_test,y_pred)
+        fitted_clf = clf.fit(x_train_rdy, y_train)
+        y_pred = fitted_clf.predict(x_test_rdy)
+        scores[f'{world}_{pipeline_name}_{key}'] = metrics.accuracy_score(y_test,y_pred)
     joined_dataset = pd.DataFrame(np.concatenate((x_train_rdy, y_train.T[:, None]), axis = 1))
     if world == "real" and pipeline_type == 4:
-        all_corr_real.append(pg.pairwise_corr(joined_dataset)["r"])
-    elif "bnlearn" in world and pipeline_type == 4 or "notears" in world and pipeline_type == 4 or "pgmpy" in world and pipeline_type == 4 or "pomegranate" in world and pipeline_type == 4:
-        all_corr_learned.append(pg.pairwise_corr(joined_dataset)["r"])
+        print("in real")
+        all_corr_real.append(pg.pairwise_corr(joined_dataset, method='pearson')["r"])
+        coefficent_df_real = joined_dataset.corr()
+    elif "notears-logistic" in world and pipeline_type == 4:
+        print("in learned")
+        if coefficent_df_learned.empty:
+            all_corr_learned.append(pg.pairwise_corr(joined_dataset, method='pearson')["r"])
+            coefficent_df_learned = joined_dataset.corr()
     return scores
 
 def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test, test_source):
@@ -568,488 +581,296 @@ def write_results_to_csv():
 
 
 global real_results, learned_results, learned_results_test
+learned_list = []
 real_results, learned_results, learned_results_test = run_all()
 print(real_results)
 print(learned_results)
 print(learned_results_test)
 write_results_to_csv()
 
-#refactor into list of calibrations and then iterate through list and designate benchmarks
+class Score():
+    def __init__(self, struct_learner, ml_method, problem_type, value):
+        self.struct_learner = struct_learner
+        self.ml_method = ml_method
+        self.problem_type = problem_type
+        self.value = value
+
+    def __str__(self):
+        return  self.struct_learner + " " + self.ml_method + " " + self.problem_type + " " + str(self.value)
+
+for k, v in learned_results.items():
+    learned_list.append(Score(k.split('_')[-3], k.split('_')[-1], k.split('_')[-2], learned_results[k]))
+
+list_of_lists = []
+for benchmark in learned_list:
+    benchmark_array = [benchmark.struct_learner, benchmark.ml_method, benchmark.problem_type, benchmark.value]
+    list_of_lists.append(benchmark_array)
+
+learned_list.clear()
+benchmarks_table = pd.DataFrame(list_of_lists, columns = ['StructureLearner', "MlMethod", "ProblemType", "Accuracy"])
+
+for k, v in learned_results_test.items():
+    learned_list.append(Score(k.split('_')[-3], k.split('_')[-1], k.split('_')[-2], learned_results_test[k]))
+
+list_of_lists = []
+for benchmark in learned_list:
+    benchmark_array = [benchmark.struct_learner, benchmark.ml_method, benchmark.problem_type, benchmark.value]
+    list_of_lists.append(benchmark_array)
+
+benchmarks_table_test = pd.DataFrame(list_of_lists, columns = ['StructureLearner', "MlMethod", "ProblemType", "Accuracy"])
+
 def write_results_to_figures():
     '''
     input benchmarks of SimCal experiments to output figures for predictive performance and structural performance
     :return: saved png's of benchmarks grouped by problem type
     '''
-    # Group by figure
-    labels = ['DT_G', 'DT_E', 'RF_G', 'RF_E', 'LR', 'LR_L1', 'LR_L2', 'LR_E', 'NB_B', 'NB_G', 'NB_M', 'NB_C', 'SVM_S',
-              'SVM_P', 'SVM_R', 'KNN_W', 'KNN_D']
+    colors = ["limegreen", "forestgreen", "darkgreen","#FF6347","#FF4500","#DC143C", "darkviolet", "rebeccapurple","royalblue", "blue", "mediumblue", "navy" ]
+    sns.set_context('paper')
+    sns.set_theme(style="whitegrid")
+    customPalette = sns.set_palette(sns.color_palette(colors))
+    # Group by figure filteration
+    linear_filtered_data = benchmarks_table.loc[benchmarks_table["ProblemType"].isin(['linear'])]
+    nonlinear_filtered_data = benchmarks_table.loc[benchmarks_table["ProblemType"].isin(['non-linear'])]
+    sparse_filtered_data = benchmarks_table.loc[benchmarks_table["ProblemType"].isin(['sparse'])]
+    dimensional_filtered_data = benchmarks_table.loc[benchmarks_table["ProblemType"].isin(['dimension'])]
+    linear_test_filtered_data = benchmarks_table_test.loc[benchmarks_table_test["ProblemType"].isin(['linear'])]
+    nonlinear_test_filtered_data = benchmarks_table_test.loc[benchmarks_table_test["ProblemType"].isin(['non-linear'])]
+    sparse_test_filtered_data = benchmarks_table_test.loc[benchmarks_table_test["ProblemType"].isin(['sparse'])]
+    dimensional_test_filtered_data = benchmarks_table_test.loc[benchmarks_table_test["ProblemType"].isin(['dimension'])]
 
-    #linear benchmarks
-    bn_hc_linear_means, bn_tabu_linear_means, bn_mmhc_linear_means, bn_rsmax2_linear_means = [], [], [], []
-    nt_log_linear_means, nt_l2_linear_means, nt_p_linear_means = [], [], []
-    p_e_linear_means, p_g_linear_means = [], []
-    pgmpy_tree_linear_means, pgmpy_hc_linear_means, pgmpy_mmhc_linear_means = [], [], []
-
-    # Nonlinear benchmarks
-    bn_hc_nonlinear_means, bn_tabu_nonlinear_means, bn_mmhc_nonlinear_means, bn_rsmax2_nonlinear_means = [], [], [], []
-    nt_log_nonlinear_means, nt_l2_nonlinear_means, nt_p_nonlinear_means = [], [], []
-    p_e_nonlinear_means, p_g_nonlinear_means = [], []
-    pgmpy_tree_nonlinear_means, pgmpy_hc_nonlinear_means, pgmpy_mmhc_nonlinear_means = [], [], []
-
-    # Sparse benchmarks
-    bn_hc_sparse_means, bn_tabu_sparse_means, bn_mmhc_sparse_means, bn_rsmax2_sparse_means = [], [], [], []
-    nt_log_sparse_means, nt_l2_sparse_means, nt_p_sparse_means = [], [], []
-    p_e_sparse_means, p_g_sparse_means = [], []
-    pgmpy_tree_sparse_means, pgmpy_hc_sparse_means, pgmpy_mmhc_sparse_means = [], [], []
-
-    # Dimension benchmarks
-    bn_hc_dimension_means, bn_tabu_dimension_means, bn_mmhc_dimension_means, bn_rsmax2_dimension_means = [], [], [], []
-    nt_log_dimension_means, nt_l2_dimension_means, nt_p_dimension_means = [], [], []
-    p_e_dimension_means, p_g_dimension_means = [], []
-    pgmpy_tree_dimension_means, pgmpy_hc_dimension_means, pgmpy_mmhc_dimension_means = [], [], []
-
-    # Benchmarks from the test-set being from learned world
-    # linear benchmarks
-    bn_hc_linear_test_means, bn_tabu_linear_test_means, bn_mmhc_linear_test_means, bn_rsmax2_linear_test_means = [], [], [], []
-    nt_log_linear_test_means, nt_l2_linear_test_means, nt_p_linear_test_means = [], [], []
-    p_e_linear_test_means, p_g_linear_test_means = [], []
-    pgmpy_tree_linear_test_means, pgmpy_hc_linear_test_means, pgmpy_mmhc_linear_test_means = [], [], []
-
-    # Nonlinear benchmarks
-    bn_hc_nonlinear_test_means, bn_tabu_nonlinear_test_means, bn_mmhc_nonlinear_test_means, bn_rsmax2_nonlinear_test_means = [], [], [], []
-    nt_log_nonlinear_test_means, nt_l2_nonlinear_test_means, nt_p_nonlinear_test_means = [], [], []
-    p_e_nonlinear_test_means, p_g_nonlinear_test_means = [], []
-    pgmpy_tree_nonlinear_test_means, pgmpy_hc_nonlinear_test_means, pgmpy_mmhc_nonlinear_test_means = [], [], []
-
-    # Sparse benchmarks
-    bn_hc_sparse_test_means, bn_tabu_sparse_test_means, bn_mmhc_sparse_test_means, bn_rsmax2_sparse_test_means = [], [], [], []
-    nt_log_sparse_test_means, nt_l2_sparse_test_means, nt_p_sparse_test_means = [], [], []
-    p_e_sparse_test_means, p_g_sparse_test_means = [], []
-    pgmpy_tree_sparse_test_means, pgmpy_hc_sparse_test_means, pgmpy_mmhc_sparse_test_means = [], [], []
-
-    # Dimension benchmarks
-    bn_hc_dimension_test_means, bn_tabu_dimension_test_means, bn_mmhc_dimension_test_means, bn_rsmax2_dimension_test_means = [], [], [], []
-    nt_log_dimension_test_means, nt_l2_dimension_test_means, nt_p_dimension_test_means = [], [], []
-    p_e_dimension_test_means, p_g_dimension_test_means = [], []
-    pgmpy_tree_dimension_test_means, pgmpy_hc_dimension_test_means, pgmpy_mmhc_dimension_test_means = [], [], []
-
-    for k, v in learned_results.items():
-        if k.split('_')[-2] == "linear":
-            if k.split('_')[-3] == "bnlearn-hc":
-                bn_hc_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-tabu":
-                bn_tabu_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-mmhc":
-                bn_mmhc_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-rsmax2":
-                bn_rsmax2_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-logistic":
-                nt_log_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-l2":
-                nt_l2_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-poisson":
-                nt_p_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-hc":
-                pgmpy_hc_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-tree":
-                pgmpy_tree_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-mmhc":
-                pgmpy_mmhc_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pomegranate-exact":
-                p_e_linear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pomegranate-greedy":
-                p_g_linear_means.append(learned_results[k])
-        elif k.split('_')[-2] == "non-linear":
-            if k.split('_')[-3] == "bnlearn-hc":
-                bn_hc_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-tabu":
-                bn_tabu_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-mmhc":
-                bn_mmhc_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-rsmax2":
-                bn_rsmax2_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-logistic":
-                nt_log_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-l2":
-                nt_l2_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-poisson":
-                nt_p_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-hc":
-                pgmpy_hc_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-tree":
-                pgmpy_tree_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-mmhc":
-                pgmpy_mmhc_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pomegranate-exact":
-                p_e_nonlinear_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pomegranate-greedy":
-                p_g_nonlinear_means.append(learned_results[k])
-        elif k.split('_')[-2] == "sparse":
-            if k.split('_')[-3] == "bnlearn-hc":
-                bn_hc_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-tabu":
-                bn_tabu_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-mmhc":
-                bn_mmhc_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-rsmax2":
-                bn_rsmax2_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-logistic":
-                nt_log_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-l2":
-                nt_l2_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-poisson":
-                nt_p_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-hc":
-                pgmpy_hc_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-tree":
-                pgmpy_tree_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-mmhc":
-                pgmpy_mmhc_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pomegranate-exact":
-                p_e_sparse_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pomegranate-greedy":
-                p_g_sparse_means.append(learned_results[k])
-        elif k.split('_')[-2] == "dimension":
-            if k.split('_')[-3] == "bnlearn-hc":
-                bn_hc_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-tabu":
-                bn_tabu_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-mmhc":
-                bn_mmhc_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "bnlearn-rsmax2":
-                bn_rsmax2_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-logistic":
-                nt_log_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-l2":
-                nt_l2_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "notears-poisson":
-                nt_p_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-hc":
-                pgmpy_hc_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-tree":
-                pgmpy_tree_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pgmpy-mmhc":
-                pgmpy_mmhc_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pomegranate-exact":
-                p_e_dimension_means.append(learned_results[k])
-            elif k.split('_')[-3] == "pomegranate-greedy":
-                p_g_dimension_means.append(learned_results[k])
-
-    for k, v in learned_results_test.items():
-        if k.split('_')[-2] == "linear":
-            if k.split('_')[-3] == "bnlearn-hc":
-                bn_hc_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-tabu":
-                bn_tabu_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-mmhc":
-                bn_mmhc_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-rsmax2":
-                bn_rsmax2_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-logistic":
-                nt_log_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-l2":
-                nt_l2_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-poisson":
-                nt_p_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-hc":
-                pgmpy_hc_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-tree":
-                pgmpy_tree_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-mmhc":
-                pgmpy_mmhc_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pomegranate-exact":
-                p_e_linear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pomegranate-greedy":
-                p_g_linear_test_means.append(learned_results_test[k])
-        elif k.split('_')[-2] == "non-linear":
-            if k.split('_')[-3] == "bnlearn-hc":
-                bn_hc_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-tabu":
-                bn_tabu_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-mmhc":
-                bn_mmhc_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-rsmax2":
-                bn_rsmax2_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-logistic":
-                nt_log_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-l2":
-                nt_l2_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-poisson":
-                nt_p_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-hc":
-                pgmpy_hc_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-tree":
-                pgmpy_tree_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-mmhc":
-                pgmpy_mmhc_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pomegranate-exact":
-                p_e_nonlinear_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pomegranate-greedy":
-                p_g_nonlinear_test_means.append(learned_results_test[k])
-        elif k.split('_')[-2] == "sparse":
-            if k.split('_')[-3] == "bnlearn-hc":
-                bn_hc_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-tabu":
-                bn_tabu_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-mmhc":
-                bn_mmhc_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-rsmax2":
-                bn_rsmax2_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-logistic":
-                nt_log_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-l2":
-                nt_l2_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-poisson":
-                nt_p_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-hc":
-                pgmpy_hc_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-tree":
-                pgmpy_tree_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-mmhc":
-                pgmpy_mmhc_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pomegranate-exact":
-                p_e_sparse_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pomegranate-greedy":
-                p_g_sparse_test_means.append(learned_results_test[k])
-        elif k.split('_')[-2] == "dimension":
-            if k.split('_')[-3] == "bnlearn-hc":
-                bn_hc_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-tabu":
-                bn_tabu_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-mmhc":
-                bn_mmhc_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "bnlearn-rsmax2":
-                bn_rsmax2_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-logistic":
-                nt_log_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-l2":
-                nt_l2_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "notears-poisson":
-                nt_p_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-hc":
-                pgmpy_hc_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-tree":
-                pgmpy_tree_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pgmpy-mmhc":
-                pgmpy_mmhc_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pomegranate-exact":
-                p_e_dimension_test_means.append(learned_results_test[k])
-            elif k.split('_')[-3] == "pomegranate-greedy":
-                p_g_dimension_test_means.append(learned_results_test[k])
-
-    # Produce Linear Problem by Library on Problem Group by figure - Testset from real world
-    plt.rcParams["figure.figsize"] = [18, 18]
-    plt.rcParams["figure.autolayout"] = True
-    x_axis = np.arange(len(labels))
-    w = 0.05  # the width of the bars
-    plt.bar(x_axis + w, bn_hc_linear_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
-    plt.bar(x_axis + w * 2, bn_tabu_linear_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
-    plt.bar(x_axis + w * 3, bn_mmhc_linear_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
-    plt.bar(x_axis + w * 4, bn_rsmax2_linear_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
-    plt.bar(x_axis + w * 5, nt_log_linear_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
-    plt.bar(x_axis + w * 6, nt_l2_linear_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
-    plt.bar(x_axis + w * 7, nt_p_linear_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
-    plt.bar(x_axis + w * 8, p_e_linear_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
-    plt.bar(x_axis + w * 9, p_g_linear_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
-    plt.bar(x_axis + w * 10, pgmpy_mmhc_linear_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
-    plt.bar(x_axis + w * 11, pgmpy_hc_linear_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
-    plt.bar(x_axis + w * 12, pgmpy_tree_linear_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
-
-    plt.xticks(x_axis, labels)
-    plt.legend()
-    plt.style.use("fivethirtyeight")
-    plt.ylabel('Accuracy')
-    plt.xlabel('ML Technique', labelpad=15)
-    plt.title('Linear Problem - Performance by library on ML technique')
-    plt.ylim(0.0, 1)
-    plt.savefig('pipeline_summary_benchmark_for_linear_by_library_groupbar.png', bbox_inches='tight')
-    plt.show()
-
+    strGroupingLinear = sns.catplot(
+        data=linear_filtered_data, kind="bar", legend_out=True,
+        x="MlMethod", y="Accuracy", hue="StructureLearner", palette=customPalette, alpha=1
+    )
+    strGroupingLinear.set_axis_labels("ML Method", "Accuracy (%)")
+    strGroupingLinear.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_linear_by_library_groupbar.png')
+    plt.close()
     # Produce Non-Linear Problem by Library on Problem Group by figure
-    plt.bar(x_axis + w, bn_hc_nonlinear_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
-    plt.bar(x_axis + w * 2, bn_tabu_nonlinear_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
-    plt.bar(x_axis + w * 3, bn_mmhc_nonlinear_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
-    plt.bar(x_axis + w * 4, bn_rsmax2_nonlinear_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
-    plt.bar(x_axis + w * 5, nt_log_nonlinear_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
-    plt.bar(x_axis + w * 6, nt_l2_nonlinear_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
-    plt.bar(x_axis + w * 7, nt_p_nonlinear_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
-    plt.bar(x_axis + w * 8, p_e_nonlinear_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
-    plt.bar(x_axis + w * 9, p_g_nonlinear_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
-    plt.bar(x_axis + w * 10, pgmpy_mmhc_nonlinear_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
-    plt.bar(x_axis + w * 11, pgmpy_hc_nonlinear_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
-    plt.bar(x_axis + w * 12, pgmpy_tree_nonlinear_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
-
-    plt.xticks(x_axis, labels)
-    plt.legend()
-    plt.ylabel('Accuracy')
-    plt.xlabel('ML Technique', labelpad=15)
-    plt.title('Non-Linear Problem - Performance by library on ML technique')
-    plt.ylim(0.0, 1)
-    plt.savefig('pipeline_summary_benchmark_for_nonlinear_by_library_groupbar.png', bbox_inches='tight')
-    plt.show()
-
+    strGroupingNonlinear = sns.catplot(
+        data=nonlinear_filtered_data, kind="bar", legend_out=True,
+        x="MlMethod", y="Accuracy", hue="StructureLearner", palette=customPalette, alpha=1
+    )
+    strGroupingNonlinear.set_axis_labels("ML Method", "Accuracy (%)")
+    strGroupingNonlinear.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_nonlinear_by_library_groupbar.png')
+    plt.close()
     # Produce Sparse Problem by Library on Problem Group by figure
-    plt.bar(x_axis + w, bn_hc_sparse_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
-    plt.bar(x_axis + w * 2, bn_tabu_sparse_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
-    plt.bar(x_axis + w * 3, bn_mmhc_sparse_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
-    plt.bar(x_axis + w * 4, bn_rsmax2_sparse_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
-    plt.bar(x_axis + w * 5, nt_log_sparse_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
-    plt.bar(x_axis + w * 6, nt_l2_sparse_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
-    plt.bar(x_axis + w * 7, nt_p_sparse_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
-    plt.bar(x_axis + w * 8, p_e_sparse_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
-    plt.bar(x_axis + w * 9, p_g_sparse_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
-    plt.bar(x_axis + w * 10, pgmpy_mmhc_sparse_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
-    plt.bar(x_axis + w * 11, pgmpy_hc_sparse_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
-    plt.bar(x_axis + w * 12, pgmpy_tree_sparse_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
-
-    plt.xticks(x_axis, labels)
-    plt.legend()
-    plt.ylabel('Accuracy')
-    plt.xlabel('ML Technique', labelpad=15)
-    plt.title('Sparse Problem - Performance by library on ML technique')
-    plt.ylim(0.0, 1)
-    plt.savefig('pipeline_summary_benchmark_for_sparse_by_library_groupbar.png', bbox_inches='tight')
-    plt.show()
-
+    strGroupingSparse = sns.catplot(
+        data=sparse_filtered_data, kind="bar", legend_out=True,
+        x="MlMethod", y="Accuracy", hue="StructureLearner", palette=customPalette, alpha=1
+    )
+    strGroupingSparse.set_axis_labels("ML Method", "Accuracy (%)")
+    strGroupingSparse.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_sparse_by_library_groupbar.png')
+    plt.close()
     # Produce Dimensional Problem by Library on Problem Group by figure
-    plt.bar(x_axis + w, bn_hc_dimension_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
-    plt.bar(x_axis + w * 2, bn_tabu_dimension_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
-    plt.bar(x_axis + w * 3, bn_mmhc_dimension_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
-    plt.bar(x_axis + w * 4, bn_rsmax2_dimension_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
-    plt.bar(x_axis + w * 5, nt_log_dimension_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
-    plt.bar(x_axis + w * 6, nt_l2_dimension_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
-    plt.bar(x_axis + w * 7, nt_p_dimension_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
-    plt.bar(x_axis + w * 8, p_e_dimension_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
-    plt.bar(x_axis + w * 9, p_g_dimension_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
-    plt.bar(x_axis + w * 10, pgmpy_mmhc_dimension_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
-    plt.bar(x_axis + w * 11, pgmpy_hc_dimension_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
-    plt.bar(x_axis + w * 12, pgmpy_tree_dimension_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
-
-    plt.xticks(x_axis, labels)
-    plt.legend()
-    plt.ylabel('Accuracy')
-    plt.xlabel('ML Technique', labelpad=15)
-    plt.title('Dimensional Problem - Performance by library on ML technique')
-    plt.ylim(0.0, 1)
-    plt.savefig('pipeline_summary_benchmark_for_dimensional_by_library_groupbar.png', bbox_inches='tight')
-    plt.show()
+    strGroupingDimension = sns.catplot(
+        data=dimensional_filtered_data, kind="bar", legend_out=True,
+        x="MlMethod", y="Accuracy", hue="StructureLearner", palette=customPalette, alpha=1
+    )
+    strGroupingDimension.set_axis_labels("ML Method", "Accuracy (%)")
+    strGroupingDimension.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_dimensional_by_library_groupbar.png')
+    plt.close()
 
     # Produce Linear Problem by Library on Problem Group by figure - Testset from learned world
-    plt.bar(x_axis + w, bn_hc_linear_test_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
-    plt.bar(x_axis + w * 2, bn_tabu_linear_test_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
-    plt.bar(x_axis + w * 3, bn_mmhc_linear_test_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
-    plt.bar(x_axis + w * 4, bn_rsmax2_linear_test_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
-    plt.bar(x_axis + w * 5, nt_log_linear_test_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
-    plt.bar(x_axis + w * 6, nt_l2_linear_test_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
-    plt.bar(x_axis + w * 7, nt_p_linear_test_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
-    plt.bar(x_axis + w * 8, p_e_linear_test_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
-    plt.bar(x_axis + w * 9, p_g_linear_test_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
-    plt.bar(x_axis + w * 10, pgmpy_mmhc_linear_test_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
-    plt.bar(x_axis + w * 11, pgmpy_hc_linear_test_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
-    plt.bar(x_axis + w * 12, pgmpy_tree_linear_test_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
-
-    plt.xticks(x_axis, labels)
-    plt.legend()
-    plt.style.use("fivethirtyeight")
-    plt.ylabel('Accuracy')
-    plt.xlabel('ML Technique', labelpad=15)
-    plt.title('Linear Problem test-set of learned world- Performance by library on ML technique')
-    plt.ylim(0.0, 1)
-    plt.savefig('pipeline_summary_benchmark_for_linear_test_by_library_groupbar.png', bbox_inches='tight')
-    plt.show()
-
+    strGroupingLinear = sns.catplot(
+        data=linear_test_filtered_data, kind="bar", legend_out=True,
+        x="MlMethod", y="Accuracy", hue="StructureLearner", palette=customPalette, alpha=1
+    )
+    strGroupingLinear.set_axis_labels("ML Method", "Accuracy (%)")
+    strGroupingLinear.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_linear_test_by_library_groupbar.png')
+    plt.close()
     # Produce Non-Linear Problem by Library on Problem Group by figure
-    plt.bar(x_axis + w, bn_hc_nonlinear_test_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
-    plt.bar(x_axis + w * 2, bn_tabu_nonlinear_test_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
-    plt.bar(x_axis + w * 3, bn_mmhc_nonlinear_test_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
-    plt.bar(x_axis + w * 4, bn_rsmax2_nonlinear_test_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
-    plt.bar(x_axis + w * 5, nt_log_nonlinear_test_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
-    plt.bar(x_axis + w * 6, nt_l2_nonlinear_test_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
-    plt.bar(x_axis + w * 7, nt_p_nonlinear_test_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
-    plt.bar(x_axis + w * 8, p_e_nonlinear_test_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
-    plt.bar(x_axis + w * 9, p_g_nonlinear_test_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
-    plt.bar(x_axis + w * 10, pgmpy_mmhc_nonlinear_test_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
-    plt.bar(x_axis + w * 11, pgmpy_hc_nonlinear_test_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
-    plt.bar(x_axis + w * 12, pgmpy_tree_nonlinear_test_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
-
-    plt.xticks(x_axis, labels)
-    plt.legend()
-    plt.ylabel('Accuracy')
-    plt.xlabel('ML Technique', labelpad=15)
-    plt.title('Non-Linear Problem test-set of learned world - Performance by library on ML technique')
-    plt.ylim(0.0, 1)
-    plt.savefig('pipeline_summary_benchmark_for_nonlinear_test_by_library_groupbar.png', bbox_inches='tight')
-    plt.show()
-
+    strGroupingNonlinear = sns.catplot(
+        data=nonlinear_test_filtered_data, kind="bar", legend_out=True,
+        x="MlMethod", y="Accuracy", hue="StructureLearner", palette=customPalette, alpha=1
+    )
+    strGroupingNonlinear.set_axis_labels("ML Method", "Accuracy (%)")
+    strGroupingNonlinear.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_nonlinear_test_by_library_groupbar.png')
+    plt.close()
     # Produce Sparse Problem by Library on Problem Group by figure
-    plt.bar(x_axis + w, bn_hc_sparse_test_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
-    plt.bar(x_axis + w * 2, bn_tabu_sparse_test_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
-    plt.bar(x_axis + w * 3, bn_mmhc_sparse_test_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
-    plt.bar(x_axis + w * 4, bn_rsmax2_sparse_test_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
-    plt.bar(x_axis + w * 5, nt_log_sparse_test_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
-    plt.bar(x_axis + w * 6, nt_l2_sparse_test_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
-    plt.bar(x_axis + w * 7, nt_p_sparse_test_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
-    plt.bar(x_axis + w * 8, p_e_sparse_test_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
-    plt.bar(x_axis + w * 9, p_g_sparse_test_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
-    plt.bar(x_axis + w * 10, pgmpy_mmhc_sparse_test_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
-    plt.bar(x_axis + w * 11, pgmpy_hc_sparse_test_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
-    plt.bar(x_axis + w * 12, pgmpy_tree_sparse_test_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
-
-    plt.xticks(x_axis, labels)
-    plt.legend()
-    plt.ylabel('Accuracy')
-    plt.xlabel('ML Technique', labelpad=15)
-    plt.title('Sparse Problem test-set of learned world - Performance by library on ML technique')
-    plt.ylim(0.0, 1)
-    plt.savefig('pipeline_summary_benchmark_for_sparse_test_by_library_groupbar.png', bbox_inches='tight')
-    plt.show()
-
+    strGroupingSparse = sns.catplot(
+        data=sparse_test_filtered_data, kind="bar", legend_out=True,
+        x="MlMethod", y="Accuracy", hue="StructureLearner", palette=customPalette, alpha=1
+    )
+    strGroupingSparse.set_axis_labels("ML Method", "Accuracy (%)")
+    strGroupingSparse.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_sparse_test_by_library_groupbar.png')
+    plt.close()
     # Produce Dimensional Problem by Library on Problem Group by figure
-    plt.bar(x_axis + w, bn_hc_dimension_test_means, width=0.05, label="BN_LEARN (HC)", color="lightsteelblue")
-    plt.bar(x_axis + w * 2, bn_tabu_dimension_test_means, width=0.05, label="BN_LEARN (TABU)", color="cornflowerblue")
-    plt.bar(x_axis + w * 3, bn_mmhc_dimension_test_means, width=0.05, label="BN_LEARN (MMHC)", color="blue")
-    plt.bar(x_axis + w * 4, bn_rsmax2_dimension_test_means, width=0.05, label="BN_LEARN (RSMAX2)", color="mediumblue")
-    plt.bar(x_axis + w * 5, nt_log_dimension_test_means, width=0.05, label="NO_TEARS (logistic)", color="limegreen")
-    plt.bar(x_axis + w * 6, nt_l2_dimension_test_means, width=0.05, label="NO_TEARS (l2)", color="forestgreen")
-    plt.bar(x_axis + w * 7, nt_p_dimension_test_means, width=0.05, label="NO_TEARS (poisson)", color="darkgreen")
-    plt.bar(x_axis + w * 8, p_e_dimension_test_means, width=0.05, label="POMEGRANATE (exact)", color="darkviolet")
-    plt.bar(x_axis + w * 9, p_g_dimension_test_means, width=0.05, label="POMEGRANATE (greed)", color="rebeccapurple")
-    plt.bar(x_axis + w * 10, pgmpy_mmhc_dimension_test_means, width=0.05, label="PGMPY (MMHC)", color="#FA8072")
-    plt.bar(x_axis + w * 11, pgmpy_hc_dimension_test_means, width=0.05, label="PGMPY (HC)", color="#FF2400")
-    plt.bar(x_axis + w * 12, pgmpy_tree_dimension_test_means, width=0.05, label="PGMPY (TREE)", color="#7C0A02")
-
-    plt.xticks(x_axis, labels)
-    plt.legend()
-    plt.ylabel('Accuracy')
-    plt.xlabel('ML Technique', labelpad=15)
-    plt.title('Dimensional Problem test-set of learned world - Performance by library on ML technique')
-    plt.ylim(0.0, 1)
-    plt.savefig('pipeline_summary_benchmark_for_dimensional_test_by_library_groupbar.png', bbox_inches='tight')
-    plt.show()
+    strGroupingDimension = sns.catplot(
+        data=dimensional_test_filtered_data, kind="bar", legend_out=True,
+        x="MlMethod", y="Accuracy", hue="StructureLearner", palette=customPalette, alpha=1
+    )
+    strGroupingDimension.set_axis_labels("ML Method", "Accuracy (%)")
+    strGroupingDimension.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_dimensional_test_by_library_groupbar.png')
+    plt.close()
 
     #Make comparative correlation figure - Histogram
-    fig = sns.distplot(all_corr_real, hist=True, kde=True, color='darkblue',
+    sns.distplot(all_corr_real, hist=True, kde=True, color='darkblue',
                  hist_kws={'edgecolor': 'black'},
-                 kde_kws={'linewidth': 4}).get_figure()
+                 kde_kws={'linewidth': 4})
     plt.title('Histogram of Correlation Coefficents from the real world')
-    fig.savefig("histogram_coefficent_real.png")
+    plt.savefig("histogram_coefficent_real.png")
     plt.show()
-    fig = sns.distplot(all_corr_learned,  hist=True, kde=True, color='darkblue',
+    plt.close()
+    sns.distplot(all_corr_learned,  hist=True, kde=True, color='darkblue',
                  hist_kws={'edgecolor': 'black'},
-                 kde_kws={'linewidth': 4}).get_figure()
+                 kde_kws={'linewidth': 4})
     plt.title('Histogram of Correlation Coefficents from the learned world')
-    fig.savefig("histogram_coefficent_learned.png")
-    #Make comparative correlation figure - Scatterplot
-    fig = sns.scatterplot(
-                    data=all_corr_real).get_figure()
-    plt.title('Scatterplot of Correlation Coefficents from the real world')
-    fig.savefig("scatterplot_coefficent_real.png")
+    plt.savefig("histogram_coefficent_learned.png")
     plt.show()
-    fig = sns.scatterplot(data=all_corr_learned).get_figure()
-    plt.title('Scatterplot of Correlation Coefficents from the learned world')
-    fig.savefig("scatterplot_coefficent_learned.png")
+    plt.close()
+
+    # Historgram by StructuralLearner
+    mlGroupingLinear = sns.catplot(
+        data=linear_filtered_data, kind="bar", legend_out=True,
+        x="StructureLearner", y="Accuracy", hue="MlMethod", alpha=1
+    )
+    mlGroupingLinear.set_axis_labels("Structural Learner", "Accuracy (%)")
+    mlGroupingLinear.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_linear_by_ml_groupbar.png')
+    plt.close()
+
+    # Historgram by StructuralLearner
+    mlGroupingLinear = sns.catplot(
+        data=linear_test_filtered_data, kind="bar", legend_out=True,
+        x="StructureLearner", y="Accuracy", hue="MlMethod", alpha=1
+    )
+    mlGroupingLinear.set_axis_labels("Structural Learner", "Accuracy (%)")
+    mlGroupingLinear.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_linear_test_by_ml_groupbar.png')
+    plt.close()
+
+    mlGroupingNonlinear = sns.catplot(
+        data=nonlinear_filtered_data, kind="bar", legend_out=True,
+        x="StructureLearner", y="Accuracy", hue="MlMethod", alpha=1
+    )
+    mlGroupingNonlinear.set_axis_labels("Structural Learner", "Accuracy (%)")
+    mlGroupingNonlinear.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_nonlinear_by_ml_groupbar.png')
+    plt.close()
+
+    mlGroupingNonlinear = sns.catplot(
+        data=nonlinear_test_filtered_data, kind="bar", legend_out=True,
+        x="StructureLearner", y="Accuracy", hue="MlMethod", alpha=1
+    )
+    mlGroupingNonlinear.set_axis_labels("Structural Learner", "Accuracy (%)")
+    mlGroupingNonlinear.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_nonlinear_test_by_ml_groupbar.png')
+    plt.close()
+
+    mlGroupingSparse = sns.catplot(
+        data=sparse_filtered_data, kind="bar", legend_out=True,
+        x="StructureLearner", y="Accuracy", hue="MlMethod", alpha=1
+    )
+    mlGroupingSparse.set_axis_labels("Structural Learner", "Accuracy (%)")
+    mlGroupingSparse.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_sparse_by_ml_groupbar.png')
+    plt.close()
+
+    mlGroupingSparse = sns.catplot(
+        data=sparse_test_filtered_data, kind="bar", legend_out=True,
+        x="StructureLearner", y="Accuracy", hue="MlMethod", alpha=1
+    )
+    mlGroupingSparse.set_axis_labels("Structural Learner", "Accuracy (%)")
+    mlGroupingSparse.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_sparse_test_by_ml_groupbar.png')
+    plt.close()
+
+    mlGroupingDimension = sns.catplot(
+        data=dimensional_filtered_data, kind="bar", legend_out=True,
+        x="StructureLearner", y="Accuracy", hue="MlMethod", alpha=1
+    )
+    mlGroupingDimension.set_axis_labels("Structural Learner", "Accuracy (%)")
+    mlGroupingDimension.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_dimensional_by_ml_groupbar.png')
+    plt.close()
+
+    mlGroupingDimension = sns.catplot(
+        data=dimensional_test_filtered_data, kind="bar", legend_out=True,
+        x="StructureLearner", y="Accuracy", hue="MlMethod", alpha=1
+    )
+    mlGroupingDimension.set_axis_labels("Structural Learner", "Accuracy (%)")
+    mlGroupingDimension.set(ylim=(0.0, 1))
+    plt.gcf().set_size_inches(9, 12)
+    plt.xticks(rotation=90)
+    plt.savefig('pipeline_summary_benchmark_for_dimensional_test_by_ml_groupbar.png')
+    plt.close()
+
+    print(len(all_corr_real))
+    print(len(all_corr_learned))
+    print("real")
+    print(coefficent_df_real.shape)
+    print(coefficent_df_real)
+    print("learned")
+    print(coefficent_df_learned.shape)
+    print(coefficent_df_learned)
+
+    #Make comparative correlation figure - Scatterplot
+
+    scatter_real = sns.scatterplot(data=coefficent_df_real)
+    plt.title('Scatterplot of Correlation Coefficent values between variables from the real/learned world')
+    plt.savefig("scatterplot_coefficent_real.png")
     plt.show()
 
+    scatter_learned = sns.scatterplot(data=coefficent_df_learned)
+    plt.title('Scatterplot of Correlation Coefficent values between variables from the real/learned world')
+    plt.savefig("scatterplot_coefficent_learned.png")
+    plt.show()
+
+    np.ones_like(coefficent_df_real, dtype=np.bool)
+    mask = np.triu(np.ones_like(coefficent_df_real, dtype=np.bool))
+    mask = mask[1:, :-1]
+    masked_corr_real = coefficent_df_real.iloc[1:, :-1].copy()
+    sns.heatmap(masked_corr_real, cmap="Blues", linewidth=0.3, linecolor='w', square=True)
+    plt.title('Heatmap of pairwise coefficent values of variables drawn from the real world')
+    plt.savefig("heatmap_coefficent_real.png")
+    plt.show()
+
+    np.ones_like(coefficent_df_learned, dtype=np.bool)
+    mask = np.triu(np.ones_like(coefficent_df_learned, dtype=np.bool))
+    mask = mask[1:, :-1]
+    masked_corr_learned = coefficent_df_learned.iloc[1:, :-1].copy()
+    sns.heatmap(masked_corr_learned, cmap="Blues", linewidth=0.3, linecolor='w', square=True)
+    plt.title('Heatmap of pairwise coefficent values of variables drawn from the learned world')
+    plt.savefig("heatmap_coefficent_learned.png")
+    plt.show()
 
 write_results_to_figures()
 
