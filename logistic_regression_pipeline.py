@@ -431,17 +431,17 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
     global coefficent_df_real
     scores = {}
     pipeline_name = ["linear", "non-linear", "sparse", "dimension"][pipeline_type-1]
-    MLModels = {"DTCgini": DecisionTreeClassifier(criterion='gini'),
-                "DTCent": DecisionTreeClassifier(criterion='entropy'),
-                "RFCgini": RandomForestClassifier(criterion='gini'),
-                "RFCent": RandomForestClassifier(criterion='entropy'),
-                "LRnone": LogisticRegression(penalty='none'),
-                "LRl1": LogisticRegression(penalty='l1', solver='liblinear'),
-                "LRl2": LogisticRegression(penalty='l2'),
-                "LRmix": LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5),
-                "BNB": BernoulliNB(), "GNB": GaussianNB(), "MnNB": MultinomialNB(), "CNB": ComplementNB(),
-                "SVMsig": svm.SVC(kernel="sigmoid"), "SVMpoly": svm.SVC(kernel="poly"), "SVMrbf": svm.SVC(kernel="rbf"),
-                "KNCunif": KNeighborsClassifier(weights='uniform'), "KNCdist": KNeighborsClassifier(weights='distance')}
+    MLModels = {"DTCgini": DecisionTreeClassifier(criterion='gini', random_state=100),
+                #"DTCent": DecisionTreeClassifier(criterion='entropy', random_state=100),
+                "RFCgini": RandomForestClassifier(criterion='gini')}
+                #"RFCent": RandomForestClassifier(criterion='entropy')#,
+                # "LRnone": LogisticRegression(penalty='none'),
+                # "LRl1": LogisticRegression(penalty='l1', solver='liblinear'),
+                # "LRl2": LogisticRegression(penalty='l2'),
+                # "LRmix": LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5),
+                # "BNB": BernoulliNB(), "GNB": GaussianNB(), "MnNB": MultinomialNB(), "CNB": ComplementNB(),
+                # "SVMsig": svm.SVC(kernel="sigmoid"), "SVMpoly": svm.SVC(kernel="poly"), "SVMrbf": svm.SVC(kernel="rbf"),
+                # "KNCunif": KNeighborsClassifier(weights='uniform'), "KNCdist": KNeighborsClassifier(weights='distance')}
     x_train_rdy = x_train
     x_test_rdy = x_test
     for key in MLModels.keys():
@@ -451,18 +451,28 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
             x_test_rdy = min_max_scaler.transform(x_test)
         clf = MLModels[key]
         fitted_clf = clf.fit(x_train_rdy, y_train)
+        #print(f'{key} tree: {fitted_clf.tree_.threshold}')
         y_pred = fitted_clf.predict(x_test_rdy)
-        scores[f'{world}_{pipeline_name}_{key}'] = metrics.accuracy_score(y_test,y_pred)
+        scores[f'{world}_{pipeline_name}_{key}'] = metrics.balanced_accuracy_score(y_test,y_pred)
     joined_dataset = pd.DataFrame(np.concatenate((x_train_rdy, y_train.T[:, None]), axis = 1))
+    joined_dataset.to_csv("dataframe.csv", index=False)
     if world == "real" and pipeline_type == 4:
         print("in real")
         all_corr_real.append(pg.pairwise_corr(joined_dataset, method='pearson')["r"])
         coefficent_df_real = joined_dataset.corr()
+        coefficent_df_real.rename(
+            columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D', '4': 'E', '5': 'F', '6': 'G', '7': 'H', '8': 'I', '9': 'J',
+                     '10': 'K'}, inplace=True)
     elif "notears-logistic" in world and pipeline_type == 4:
         print("in learned")
         if coefficent_df_learned.empty:
             all_corr_learned.append(pg.pairwise_corr(joined_dataset, method='pearson')["r"])
             coefficent_df_learned = joined_dataset.corr()
+            coefficent_df_learned.rename(
+                columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D', '4': 'E', '5': 'F', '6': 'G', '7': 'H', '8': 'I',
+                         '9': 'J',
+                         '10': 'K'}, inplace=True)
+    print(scores)
     return scores
 
 def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test, test_source):
@@ -477,9 +487,9 @@ def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test, t
     '''
     learners = ["notears","pgmpy","pomegranate", "bnlearn"]
     notears_loss = ["logistic", "l2", "poisson"]
-    pgmpy_algorithms = ["hc","tree", "mmhc"]
+    pgmpy_algorithms = ["hc","tree"]#, "mmhc"]
     pomegranate_algorithms = ["exact", "greedy"]
-    bnlearn_algorithms = ["hc", "tabu", "mmhc", "rsmax2"]
+    bnlearn_algorithms = ["hc", "tabu", "rsmax2"] #"mmhc", "rsmax2"]
     results = {}
     if test_source == "real":
         for loss in notears_loss:
@@ -554,6 +564,7 @@ def run_all():
         scores_learned_test = evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test, "learned")
         print("Finished benchmarking Learned-world scores - test-set from learned world")
         results_learned_test.update(scores_learned_test)
+        #break
     return results_real, results_learned, results_learned_test
 
 def write_results_to_csv():
@@ -586,6 +597,7 @@ real_results, learned_results, learned_results_test = run_all()
 print(real_results)
 print(learned_results)
 print(learned_results_test)
+#exit(19)
 write_results_to_csv()
 
 class Score():
@@ -836,10 +848,15 @@ def write_results_to_figures():
     print(len(all_corr_real))
     print(len(all_corr_learned))
     print("real")
+
     print(coefficent_df_real.shape)
+
     print(coefficent_df_real)
     print("learned")
     print(coefficent_df_learned.shape)
+    coefficent_df_learned.rename(
+        columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D', '4': 'E', '5': 'F', '6': 'G', '7': 'H', '8': 'I', '9': 'J',
+                 '10': 'K'}, inplace=True)
     print(coefficent_df_learned)
 
     #Make comparative correlation figure - Scatterplot
@@ -854,21 +871,14 @@ def write_results_to_figures():
     plt.savefig("scatterplot_coefficent_learned.png")
     plt.show()
 
-    np.ones_like(coefficent_df_real, dtype=np.bool)
-    mask = np.triu(np.ones_like(coefficent_df_real, dtype=np.bool))
-    mask = mask[1:, :-1]
-    masked_corr_real = coefficent_df_real.iloc[1:, :-1].copy()
-    sns.heatmap(masked_corr_real, cmap="Blues", linewidth=0.3, linecolor='w', square=True)
-    plt.title('Heatmap of pairwise coefficent values of variables drawn from the real world')
+    hm_real = sns.heatmap(coefficent_df_real, cmap="Blues", linewidth=0.3, linecolor='w', square=True)
+    hm_real.set(xlabel='\nVariables', ylabel='Variables\t', title="Heatmap of correlation matrix for variables in the real world\n")
     plt.savefig("heatmap_coefficent_real.png")
     plt.show()
 
-    np.ones_like(coefficent_df_learned, dtype=np.bool)
-    mask = np.triu(np.ones_like(coefficent_df_learned, dtype=np.bool))
-    mask = mask[1:, :-1]
-    masked_corr_learned = coefficent_df_learned.iloc[1:, :-1].copy()
-    sns.heatmap(masked_corr_learned, cmap="Blues", linewidth=0.3, linecolor='w', square=True)
-    plt.title('Heatmap of pairwise coefficent values of variables drawn from the learned world')
+    hm_learned = sns.heatmap(coefficent_df_learned, cmap="Blues", linewidth=0.3, linecolor='w', square=True)
+    hm_learned.set(xlabel='\nVariables', ylabel='Variables\t',
+                title="Heatmap of correlation matrix for variables in the learned world\n")
     plt.savefig("heatmap_coefficent_learned.png")
     plt.show()
 
