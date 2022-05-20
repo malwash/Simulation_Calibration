@@ -109,9 +109,6 @@ def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test
         model_learn = None
         model = None
         real_data = pd.DataFrame(real_data)
-        #if config=="pc":
-        #    model_learn = PC(real_data)
-        #    model = model_learn.estimate()
         if config=="hc":
             model_learn = HillClimbSearch(real_data)
             model = model_learn.estimate(scoring_method=BicScore(real_data))
@@ -131,7 +128,6 @@ def get_data_from_learned_world(pkg_name, config, real_data, num_train, num_test
         learned_data_test = construct.simulate(n_samples=int(1000))
     elif pkg_name=="pomegranate":
         real_data = pd.DataFrame(real_data)
-        #print(real_data)
         model = BayesianNetwork.from_samples(real_data, algorithm=config)
         learned_data_train = model.sample(1000)
         learned_data_test = model.sample(1000)
@@ -431,17 +427,17 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
     global coefficent_df_real
     scores = {}
     pipeline_name = ["linear", "non-linear", "sparse", "dimension"][pipeline_type-1]
-    MLModels = {"DTCgini": DecisionTreeClassifier(criterion='gini', random_state=100),
-                #"DTCent": DecisionTreeClassifier(criterion='entropy', random_state=100),
-                "RFCgini": RandomForestClassifier(criterion='gini')}
-                #"RFCent": RandomForestClassifier(criterion='entropy')#,
-                # "LRnone": LogisticRegression(penalty='none'),
-                # "LRl1": LogisticRegression(penalty='l1', solver='liblinear'),
-                # "LRl2": LogisticRegression(penalty='l2'),
-                # "LRmix": LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5),
-                # "BNB": BernoulliNB(), "GNB": GaussianNB(), "MnNB": MultinomialNB(), "CNB": ComplementNB(),
-                # "SVMsig": svm.SVC(kernel="sigmoid"), "SVMpoly": svm.SVC(kernel="poly"), "SVMrbf": svm.SVC(kernel="rbf"),
-                # "KNCunif": KNeighborsClassifier(weights='uniform'), "KNCdist": KNeighborsClassifier(weights='distance')}
+    MLModels = {"DTCgini": DecisionTreeClassifier(criterion='gini'),
+                "DTCent": DecisionTreeClassifier(criterion='entropy'),
+                "RFCgini": RandomForestClassifier(criterion='gini'),
+                "RFCent": RandomForestClassifier(criterion='entropy'),
+                 "LRnone": LogisticRegression(penalty='none'),
+                 "LRl1": LogisticRegression(penalty='l1', solver='liblinear'),
+                 "LRl2": LogisticRegression(penalty='l2'),
+                 "LRmix": LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5),
+                 "BNB": BernoulliNB(), "GNB": GaussianNB(), "MnNB": MultinomialNB(), "CNB": ComplementNB(),
+                 "SVMsig": svm.SVC(kernel="sigmoid"), "SVMpoly": svm.SVC(kernel="poly"), "SVMrbf": svm.SVC(kernel="rbf"),
+                 "KNCunif": KNeighborsClassifier(weights='uniform'), "KNCdist": KNeighborsClassifier(weights='distance')}
     x_train_rdy = x_train
     x_test_rdy = x_test
     for key in MLModels.keys():
@@ -451,9 +447,8 @@ def world_evaluate(world, pipeline_type, x_train, y_train, x_test, y_test):
             x_test_rdy = min_max_scaler.transform(x_test)
         clf = MLModels[key]
         fitted_clf = clf.fit(x_train_rdy, y_train)
-        #print(f'{key} tree: {fitted_clf.tree_.threshold}')
         y_pred = fitted_clf.predict(x_test_rdy)
-        scores[f'{world}_{pipeline_name}_{key}'] = metrics.balanced_accuracy_score(y_test,y_pred)
+        scores[f'{world}_{pipeline_name}_{key}'] = metrics.accuracy_score(y_test,y_pred) #scoring function
     joined_dataset = pd.DataFrame(np.concatenate((x_train_rdy, y_train.T[:, None]), axis = 1))
     joined_dataset.to_csv("dataframe.csv", index=False)
     if world == "real" and pipeline_type == 4:
@@ -487,9 +482,9 @@ def evaluate_on_learned_world(pipeline_type, x_train, y_train, x_test, y_test, t
     '''
     learners = ["notears","pgmpy","pomegranate", "bnlearn"]
     notears_loss = ["logistic", "l2", "poisson"]
-    pgmpy_algorithms = ["hc","tree"]#, "mmhc"]
+    pgmpy_algorithms = ["hc","tree", "mmhc"]
     pomegranate_algorithms = ["exact", "greedy"]
-    bnlearn_algorithms = ["hc", "tabu", "rsmax2"] #"mmhc", "rsmax2"]
+    bnlearn_algorithms = ["hc", "tabu", "rsmax2", "mmhc", "rsmax2"]
     results = {}
     if test_source == "real":
         for loss in notears_loss:
@@ -854,21 +849,18 @@ def write_results_to_figures():
     print(coefficent_df_real)
     print("learned")
     print(coefficent_df_learned.shape)
-    coefficent_df_learned.rename(
-        columns={'0': 'A', '1': 'B', '2': 'C', '3': 'D', '4': 'E', '5': 'F', '6': 'G', '7': 'H', '8': 'I', '9': 'J',
-                 '10': 'K'}, inplace=True)
     print(coefficent_df_learned)
 
     #Make comparative correlation figure - Scatterplot
 
-    scatter_real = sns.scatterplot(data=coefficent_df_real)
-    plt.title('Scatterplot of Correlation Coefficent values between variables from the real/learned world')
-    plt.savefig("scatterplot_coefficent_real.png")
-    plt.show()
+    coef_real = coefficent_df_real.where(np.triu(np.ones(coefficent_df_real.shape), k=1).astype(np.bool))
+    coef_learned = coefficent_df_learned.where(np.triu(np.ones(coefficent_df_learned.shape), k=1).astype(np.bool))
 
-    scatter_learned = sns.scatterplot(data=coefficent_df_learned)
+    plt.figure(figsize=(20, 15))
+    scatter_real = sns.scatterplot(data=coef_real)
+    scatter_learned = sns.scatterplot(data=coef_learned, legend=False)
     plt.title('Scatterplot of Correlation Coefficent values between variables from the real/learned world')
-    plt.savefig("scatterplot_coefficent_learned.png")
+    plt.savefig("scatterplot_coefficent_comparative.png")
     plt.show()
 
     hm_real = sns.heatmap(coefficent_df_real, cmap="Blues", linewidth=0.3, linecolor='w', square=True)
