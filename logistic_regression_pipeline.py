@@ -16,7 +16,7 @@ from sklearn.tree import DecisionTreeClassifier
 from statistics import mean
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
-from dagsim.baseDS import Graph, Generic
+from dagsim.base import Graph, Generic
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -668,7 +668,7 @@ bnlearn_tabu_dimension_dict_scores = run_learned_workflows(simulated_data_train[
 bnlearn_tabu_dimension_dict_scores_simtest = run_learned_workflows(simulated_data_train[:,0:10], simulated_data_train[:,10], simulated_data_test[:,0:10], simulated_data_test[:,10], pipeline_type, "BN LEARN (TABU)")
 #end of tabu workflows
 
-#Run hyperparameter of bnlearn - pc
+#Run hyperparameter of bnlearn - pgmpy_model
 pipeline_type = 1
 simulation_dagsim.setup_realworld(pipeline_type, 1000, 1000)
 import_real_world_csv(pipeline_type)
@@ -697,7 +697,7 @@ bnlearn_pc_linear_dict_scores_simtest = run_learned_workflows(simulated_data_tra
 #simulation_bnlearn.bnlearn_setup_pc(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
 #import_simulated_csv()
 #bnlearn_pc_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:2], bn_learn_sample_train.iloc[:,2], pipeline_type, "BN LEARN (PC)")
-#end of pc workflows
+#end of pgmpy_model workflows
 
 #Run hyperparameter of bnlearn - gs
 #pipeline_type = 1
@@ -757,7 +757,7 @@ bnlearn_pc_linear_dict_scores_simtest = run_learned_workflows(simulated_data_tra
 #simulation_bnlearn.bnlearn_setup_iamb(train_data[0:100], pipeline_type) #rpy2.rinterface_lib.embedded.RRuntimeError: Error in bn.fit(my_bn, databn) : the graph is only partially directed
 #import_simulated_csv()
 #bnlearn_iamb_dimension_dict_scores = run_learned_workflows(bn_learn_sample_train.iloc[:,0:2], bn_learn_sample_train.iloc[:,2], pipeline_type, "BN LEARN (IAMB)")
-#end of pc workflows
+#end of pgmpy_model workflows
 
 #Run hyperparameter of bnlearn - mmhc
 pipeline_type = 1

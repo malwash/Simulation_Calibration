@@ -232,7 +232,7 @@ def bnlearn_setup_pc(train_data, pipeline_type):
             bn_pc <- function(r, verbose=FALSE) {
             databn <-read.csv("train.csv", header=FALSE)
             databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
-            my_bn <- pc.stable(databn)
+            my_bn <- pgmpy_model.stable(databn)
             fit = bn.fit(my_bn, databn)
             training_output = rbn(my_bn, 1000, databn)
             }
@@ -244,7 +244,7 @@ def bnlearn_setup_pc(train_data, pipeline_type):
             bn_pc <- function(r, verbose=FALSE) {
             databn <-read.csv("train.csv", header=FALSE)
             databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
-            my_bn <- pc.stable(databn)
+            my_bn <- pgmpy_model.stable(databn)
             fit = bn.fit(my_bn, databn)
             training_output = rbn(my_bn, 1000, databn)
             }
@@ -266,7 +266,7 @@ def bnlearn_setup_pc(train_data, pipeline_type):
             bn_pc <- function(r, verbose=FALSE) {
             databn <-read.csv("train.csv", header=FALSE)
             databn[,c("V1","V2","V3","V4","V5")] <- lapply(databn[,c("V1","V2","V3","V4","V5")], as.factor)
-            my_bn <- pc.stable(databn)
+            my_bn <- pgmpy_model.stable(databn)
             fit = bn.fit(my_bn, databn)
             training_output = rbn(my_bn, 1000, databn)
             }
@@ -278,7 +278,7 @@ def bnlearn_setup_pc(train_data, pipeline_type):
             bn_pc <- function(r, verbose=FALSE) {
             databn <-read.csv("train.csv", header=FALSE)
             databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")] <- lapply(databn[,c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11")], as.factor)
-            my_bn <- pc.stable(databn)
+            my_bn <- pgmpy_model.stable(databn)
             fit = bn.fit(my_bn, databn)
             training_output = rbn(my_bn, 1000, databn)
             }

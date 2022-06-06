@@ -1,19 +1,43 @@
 import bnlearn
-import notears
-import importlib
+from notears import utils
+from utils.notears_class import Notears
+from pgmpy.models import BayesianModel
+from pgmpy.estimators import BayesianEstimator
+
 
 class WorldLearner:
-    def __init__(self, pkg_name, alg_name):
-        self.pkg_name = pkg_name
-        self.alg_name = alg_name
-        self.learner = self.get_alg(pkg_name, alg_name)
+    def __init__(self, model_class, **kwargs):
         self.model = None
+        self.model_class = model_class
+        self.package = self.get_package_name()
+        self.kwargs = kwargs
 
-    def get_alg(self, pkg_name, alg_name):
-        # For functions not defined in the python file, but rather coming from external libraries, such as numpy.
-        module = importlib.import_module(pkg_name)
-        function = getattr(module, alg_name)
-        return function
+    def get_package_name(self):
+        module_name = self.model_class.__module__.split(".")[0]
+        return module_name
 
-    def learn(self, train_data, test_data):
-        self.model = self.learner(train_data, test_data)
+    def learn(self, train_data):
+        if self.package == "pgmpy":
+            init_model = self.model_class(train_data)
+            init_model = init_model.estimate()
+            construct = BayesianModel(init_model)
+            estimator = BayesianEstimator(construct, train_data)
+            cpds = estimator.get_parameters(prior_type='BDeu', equivalent_sample_size=1000)
+            for cpd in cpds:
+                construct.add_cpds(cpd)
+            construct.check_model()
+            self.model = construct
+        elif self.package == "pomegranate":
+            self.model = self.model_class()
+            self.model.from_samples(train_data)
+        elif self.package == "notears":
+            self.model = Notears(**self.kwargs)
+            self.model.fit(train_data)
+
+    def generate(self, num_samples):
+        if self.package == "pgmpy":
+            return self.model.simulate(num_samples)
+        elif self.package == "pomegranate":
+            return self.model.sample(num_samples)
+        elif self.package == "notears":
+            return self.model.simulate(num_samples)

@@ -11,3 +11,13 @@ tabulate>=0.8.9
 git+git://github.com/uio-bmi/dagsim.git@binder_check#dagsim
 git+git://github.com/xunzheng/notears.git@master#notears
 git+git://github.com/erdogant/bnlearn.git@master#bnlearn
+
+pgmpy~=0.1.18
+pomegranate~=0.14.8
+matplotlib~=3.5.1
+dagsim~=1.0.6
+notears~=3.0
+sklearn~=0.0
+bnlearn~=0.6.1
+statsmodels~=0.13.2
+rpy2~=3.4.5
