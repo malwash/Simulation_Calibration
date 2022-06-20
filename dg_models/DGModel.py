@@ -18,7 +18,7 @@ class DGModel(ABC):
         pass
 
     @abstractmethod
-    def fit(self, data: pd.DataFrame, **kwargs) -> None:
+    def fit(self, data: Data, **kwargs) -> None:
         pass
 
     def generate(self, num_samples: int, outcome_name: str) -> Data:
