@@ -121,7 +121,7 @@ class Postprocessing():
 
 if __name__ == "__main__":
     results = {"pipeline1": {
-        'real_model': {'LogisticRegression_alg': {'accuracy': 0.925}, 'BernoulliNB_alg': {'accuracy': 0.925},
+        'dg_model_real': {'LogisticRegression_alg': {'accuracy': 0.925}, 'BernoulliNB_alg': {'accuracy': 0.925},
                        'KNeighborsClassifier_alg': {'accuracy': 0.945}},
         'HillClimbSearch_alg': {'LogisticRegression_alg': {'accuracy': 0.83},
                                 'BernoulliNB_alg': {'accuracy': 0.83},

@@ -46,15 +46,8 @@ evaluator = Evaluator(ml_models=list_sklearn, dg_models=list_pgmpy, real_models=
                       outcome_name="Y")
 
 pp = Postprocessing()
-# pp.plot_scores(pipeline="pipeline1", all_results=all_results)
 
-# true_performance, *_ = evaluator.get_performance_by_repetition(ds_model, 200, 0.5, 5)
-# stats = pp.get_true_performance_stats(true_performance)
-# scores1 = evaluator.analysis_4_per_dg_model_var1(ds_model, 200, 0.5, 50)
-# # scores2 = evaluator.analysis_4_per_dg_model_var2(ds_model, 200, 0.5, 5)
-#
-# pp.plot_analysis4(scores1)
-analysis1_results = evaluator.analysis_1_per_dg_model(dg_model=ds_model, n_samples=200, tr_frac=0.5, n_btstrps=20)
+analysis1_results = evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=200, tr_frac=0.5, n_btstrps=20)
 pp.plot_analysis1(analysis1_results)
 
 analysis2 = evaluator.analysis_2_per_dg_model(ds_model)
@@ -62,3 +55,6 @@ pp.plot_correlations(analysis2)
 
 analysis3 = evaluator.analysis_2_per_dg_model(ds_model)
 pp.plot_scores(pipeline="pipeline1", analysis3_results=analysis3)
+
+analysis4 = evaluator.analysis_4_per_dg_model(ds_model, 200, 0.5, 5)
+pp.plot_analysis4(analysis4)

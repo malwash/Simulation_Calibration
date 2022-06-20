@@ -6,7 +6,7 @@ from utils.Data import Data
 import numpy as np
 
 
-class Evaluator():
+class Evaluator:
     def __init__(self, ml_models: List[MachineLearner], dg_models: List[DGModel], real_models: List[DGModel],
                  scores: List[Callable], n_learning: int, n_train: int, n_test: int, outcome_name: str = "Y"):
         self.scores = scores
@@ -18,16 +18,16 @@ class Evaluator():
         self.n_test = n_test
         self.outcome_name = outcome_name
 
-    def analysis_1_per_dg_model(self, dg_model: DGModel, n_samples: int, tr_frac: float, n_btstrps: int):
+    def analysis_1_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_btstrps: int):
         """
 
-        :param dg_model: a (pretended) real-world DagSim model
+        :param dg_model_real: a (pretended) real-world DagSim model
         :param n_samples: number of samples to generate for training + testing
         :param tr_frac: fraction of data for training
         :param n_btstrps: numer of times to  perform bootstrap
         :return: btstrp_results: dict of shape {model_name: {score_name: list_of_score_values], ...}, ...}
         """
-        orig_train_data, test_data = self.get_train_and_test_from_dg(dg_model, n_samples, tr_frac)
+        orig_train_data, test_data = self.get_train_and_test_from_dg(dg_model_real, n_samples, tr_frac)
 
         assert len(orig_train_data) + len(test_data) == n_samples
 
@@ -42,22 +42,6 @@ class Evaluator():
                     btstrp_results[ml_model.name][score_name].append(result_per_btsrtp_per_model[score_name])
         return btstrp_results
 
-    def analysis_2_per_dg_model_old(self, dg_model_real: DGModel):
-        real_train_data = dg_model_real.generate(self.n_train, self.outcome_name)
-        real_test_data = dg_model_real.generate(self.n_train, self.outcome_name)
-
-        scores = {dg_model.name: {ml_model.name: 0 for ml_model in
-                                  self.ml_models} for dg_model in self.dg_models}
-
-        for dg_model in self.dg_models:
-            dg_model.fit(real_train_data)
-            dg_model_data = dg_model.generate(10000, self.outcome_name)
-            for ml_model in self.ml_models:
-                score = self.develop_ml_model(ml_model, dg_model_data, real_test_data)
-                scores[dg_model.name][ml_model.name] = score
-
-        return scores
-
     def analysis_2_per_dg_model(self, dg_model_real: DGModel, n_learning: int = 100):
         corr_dict = {}
         real_data, corr_dict[dg_model_real.name] = self.get_corr(dg_model_real)
@@ -68,24 +52,22 @@ class Evaluator():
 
         return corr_dict
 
-    def analysis_3_per_dg_moel(self, real_model: DGModel):
+    def analysis_3_per_dg_model(self, dg_model_real: DGModel):
         metrics = {}
-        dg_metrics, learning_data, test_data = self.evaluate_dg_model(real_model, self.n_learning)
-        dg_metrics["real"] = dg_metrics.pop(real_model.name)
+        dg_metrics, learning_data, test_data = self.evaluate_dg_model(dg_model_real, self.n_learning)
+        dg_metrics["real"] = dg_metrics.pop(dg_model_real.name)
         metrics.update(dg_metrics)
         for dg_model in self.dg_models:
             dg_model.fit(learning_data)
             # todo fix issue with PC
-            # assert len(dg_model.model.nodes) == len(test_data.all.columns)
+            # assert len(dg_model_real.model.nodes) == len(test_data.all.columns)
             if len(dg_model.model.nodes) != len(test_data.all.columns):
                 continue
             dg_metrics, _, _ = self.evaluate_dg_model(dg_model, -1, test_data)
             metrics.update(dg_metrics)
         return metrics
 
-    # todo after agreeing on which one to use, extract method for training ml models (i.e. the "for ml_model" loop)
-    def analysis_4_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float,
-                                n_reps: int):
+    def analysis_4_per_dg_model(self, dg_model_real: DGModel, n_samples: int, tr_frac: float, n_reps: int):
         scores_per_dg_model = {}
         dg_model_real_scores, train_data, test_data = self.get_performance_by_repetition(dg_model_real, n_samples,
                                                                                          tr_frac, n_reps)
@@ -122,12 +104,6 @@ class Evaluator():
         metrics = {f'{dg_model.name}': metrics}
         learning_data = train_data[0:n_learning:1] if n_learning > 0 else None
         return metrics, learning_data, test_data
-
-    def run_all(self):  # level 1 repetition
-        metrics = {}
-        for real_model in self.real_models:
-            metrics[real_model.name] = self.analysis_3_per_dg_moel(real_model)
-        return metrics
 
     def get_performance_by_repetition(self, dg_model: DGModel, n_samples_real: int, tr_frac: float, n_reps: int,
                                       test_data=None):
