@@ -125,8 +125,9 @@ class Evaluator:
 
     def get_corr(self, dg_model):
         data = dg_model.generate(num_samples=100000, outcome_name=self.outcome_name)
-        corr_df = data.all.corr().where(
-            np.triu(np.ones(data.all.corr().shape), k=1).astype(bool)).stack().reset_index()
+        up_tri_mat = np.triu(np.ones(data.all.corr().shape), k=1).astype(bool)
+        corr_df = data.all.corr().where(up_tri_mat)
+        corr_df = corr_df.stack().reset_index()
         return data, corr_df
 
     def get_train_and_test_from_dg(self, dg_model_real, n_samples, tr_frac):

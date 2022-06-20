@@ -5,9 +5,9 @@ import random
 class Data():
     def __init__(self, name: str, X: pd.DataFrame, y: pd.Series):
         self.name = name
-        self.X = X
+        self.X = X.reindex(sorted(X.columns), axis=1)
         self.y = y
-        self.all = pd.merge(X, y, right_index=True, left_index=True)
+        self.all = pd.merge(self.X, y, right_index=True, left_index=True)
 
     def sort(self):
         names = self.X

@@ -47,14 +47,15 @@ evaluator = Evaluator(ml_models=list_sklearn, dg_models=list_pgmpy, real_models=
 
 pp = Postprocessing()
 
-analysis1_results = evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=200, tr_frac=0.5, n_btstrps=20)
-pp.plot_analysis1(analysis1_results)
+# analysis1_results = evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=200, tr_frac=0.5, n_btstrps=20)
+# pp.plot_analysis1(analysis1_results)
 
 analysis2 = evaluator.analysis_2_per_dg_model(ds_model)
-pp.plot_correlations(analysis2)
-
-analysis3 = evaluator.analysis_2_per_dg_model(ds_model)
-pp.plot_scores(pipeline="pipeline1", analysis3_results=analysis3)
-
-analysis4 = evaluator.analysis_4_per_dg_model(ds_model, 200, 0.5, 5)
-pp.plot_analysis4(analysis4)
+# pp.plot_analysis2(analysis2)
+pp.plot_analysis2_gks(analysis2)
+#
+# analysis3 = evaluator.analysis_2_per_dg_model(ds_model)
+# pp.plot_analysis3(pipeline="pipeline1", analysis3_results=analysis3)
+#
+# analysis4 = evaluator.analysis_4_per_dg_model(ds_model, 200, 0.5, 5)
+# pp.plot_analysis4(analysis4)
