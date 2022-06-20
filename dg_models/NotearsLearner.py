@@ -13,7 +13,7 @@ class NotearsLearner(DGModel):
 
     def fit(self, data, lambda1=0.01, loss_type='logistic', dims=(10, 2)):
         # todo: check dims
-        data = data.to_numpy()
+        data = data.all.to_numpy()
         if self.SLClass == "linear":
             self.model = notears_linear(X=data, lambda1=lambda1, loss_type=loss_type)
         elif self.SLClass == "nonlinear":

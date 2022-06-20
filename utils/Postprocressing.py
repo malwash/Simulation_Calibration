@@ -12,12 +12,12 @@ class Postprocessing():
         pass
 
     # todo give better name for different plotting functions
-    def plot_scores(self, pipeline: str, all_results: dict):
-        for score_name in TD(all_results, 3).keys():
-            data = self.dict_to_list(pipeline, score_name, all_results)
+    def plot_scores(self, pipeline: str, analysis3_results: dict):
+        for score_name in TD(analysis3_results, 3).keys():
+            data = self.dict_to_list(pipeline, score_name, analysis3_results)
             # todo chage way to get world names
-            sample_key = list(all_results.keys())[0]
-            worlds = list(all_results[sample_key].keys())
+            sample_key = list(analysis3_results.keys())[0]
+            worlds = list(analysis3_results[sample_key].keys())
             df = pd.DataFrame(data, columns=["ML", *worlds])
 
             ax = df.plot(x="ML", y=worlds, kind="bar", figsize=(9, 8))
@@ -36,13 +36,6 @@ class Postprocessing():
                 inner_list.append(all_results[pipeline][world][alg][score_name])
             data.append(inner_list)
         return data
-
-    def dict_to_dataframe(self, pipeline):
-        emdf = pd.DataFrame(index=self.ml_algs, columns=self.worlds)
-        for ml_alg in self.ml_algs:
-            for world in self.worlds:
-                emdf.at[ml_alg, world] = self.all_results[pipeline][world][ml_alg]["accuracy_score"]
-        return emdf
 
     def plot_analysis1(self, analysis1_results: pd.DataFrame):
         score_names = analysis1_results.index
