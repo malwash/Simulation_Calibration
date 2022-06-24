@@ -55,12 +55,12 @@ class Evaluator:
     def analysis_3_per_dg_model(self, dg_model_real: DGModel):
         metrics = {}
         dg_metrics, learning_data, test_data = self.evaluate_dg_model(dg_model_real, self.n_learning)
-        dg_metrics["real"] = dg_metrics.pop(dg_model_real.name)
         metrics.update(dg_metrics)
         for dg_model in self.dg_models:
             dg_model.fit(learning_data)
             # todo fix issue with PC
             # assert len(dg_model_real.model.nodes) == len(test_data.all.columns)
+            # todo change for non pgmpy models
             if len(dg_model.model.nodes) != len(test_data.all.columns):
                 continue
             dg_metrics, _, _ = self.evaluate_dg_model(dg_model, -1, test_data)

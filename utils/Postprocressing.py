@@ -59,12 +59,10 @@ class Postprocessing():
         plt.legend()
         plt.show()
 
-    def plot_analysis3(self, pipeline: str, analysis3_results: dict):
-        for score_name in TD(analysis3_results, 3).keys():
-            data = self.dict_to_list(pipeline, score_name, analysis3_results)
-            # todo chage way to get world names
-            sample_key = list(analysis3_results.keys())[0]
-            worlds = list(analysis3_results[sample_key].keys())
+    def plot_analysis3(self, analysis3_results: dict):
+        for score_name in TD(analysis3_results, 2).keys():
+            data = self.dict_to_list(score_name, analysis3_results)
+            worlds = list(analysis3_results.keys())
             df = pd.DataFrame(data, columns=["ML", *worlds])
 
             ax = df.plot(x="ML", y=worlds, kind="bar", figsize=(9, 8))
@@ -77,15 +75,14 @@ class Postprocessing():
         ax = sns.violinplot(x="world", y="score", hue="ml_model", data=unfolded_scores)
         plt.show()
 
-    def dict_to_list(self, pipeline, score_name, all_results: dict):
+    def dict_to_list(self, score_name, all_results: dict):
         data = []
-        sample_key = list(all_results.keys())[0]
-        ml_algs = list(TD(all_results[sample_key], 1).keys())
-        worlds = list(all_results[sample_key].keys())
+        ml_algs = list(TD(all_results, 1).keys())
+        worlds = list(all_results.keys())
         for alg in ml_algs:
             inner_list = [alg]
             for world in worlds:
-                inner_list.append(all_results[pipeline][world][alg][score_name])
+                inner_list.append(all_results[world][alg][score_name])
             data.append(inner_list)
         return data
 
