@@ -42,19 +42,18 @@ my_graph = Graph(name="Logistic Regression - Real-world", list_nodes=listNodes)
 ds_model = DagsimModel("pipeline1", my_graph)
 
 evaluator = Evaluator(ml_models=list_sklearn, dg_models=list_pgmpy, real_models=[ds_model],
-                      scores=[balanced_accuracy_score], n_learning=100, n_train=100, n_test=100,
-                      outcome_name="Y")
+                      scores=[balanced_accuracy_score], outcome_name="Y")
 
 pp = Postprocessing()
 
-# analysis1_results =evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=200, tr_frac=0.5, n_btstrps=20)
-# pp.plot_analysis1(analysis1_results)
+analysis1_results = evaluator.analysis_1_per_dg_model(dg_model_real=ds_model, n_samples=200, tr_frac=0.5, n_btstrps=20)
+pp.plot_analysis1(analysis1_results)
 
-# analysis2 = evaluator.analysis_2_per_dg_model(ds_model)
-# pp.plot_analysis2_gks(analysis2)
-#
+analysis2 = evaluator.analysis_2_per_dg_model(ds_model)
+pp.plot_analysis2_gks(analysis2)
+
 analysis3 = evaluator.analysis_3_per_dg_model(ds_model)
 pp.plot_analysis3(analysis3_results=analysis3)
 #
-# analysis4 = evaluator.analysis_4_per_dg_model(ds_model, 200, 0.5, 5)
-# pp.plot_analysis4(analysis4)
+analysis4 = evaluator.analysis_4_per_dg_model(ds_model, 200, 0.5, 5)
+pp.plot_analysis4(analysis4)
