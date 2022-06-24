@@ -20,6 +20,7 @@ class PgmpyModel(DGModel):
         self.model = BayesianNetwork(self.model)
         self.model.fit(data.all)
         self.learned = True
+        self.num_vars = len(self.model.nodes)
 
     def _generate(self, num_samples: int, outcome_name: str, world: str = "real", dataset: str = "train"):
 

@@ -4,12 +4,13 @@ from utils.Data import Data
 
 
 class DGModel(ABC):
-    def __init__(self, name: str, SLClass, learned: bool = False, *args, **kwargs):
+    def __init__(self, name: str, SLClass, num_vars: int = 0, learned: bool = False, *args, **kwargs):
         self.SLClass = SLClass
         self.name = name
         self.kwargs = kwargs
         self.model = None
         self.learned = learned
+        self.num_vars = num_vars
         if SLClass is not None:
             self.instantiate()
 

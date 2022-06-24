@@ -5,6 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from pgmpy.estimators import *
 import warnings
 from dg_models.PgmpyLearner import PgmpyModel
+from dg_models.NotearsLearner import NotearsLearner
 from dg_models.DagsimModel import DagsimModel
 from ml_models.SklearnModel import SklearnModel
 import numpy as np
@@ -17,6 +18,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 list_pgmpy = [PgmpyModel(f'{learner.__name__}', learner, "Y") for learner in
               [PC, HillClimbSearch, TreeSearch]]  # , ExhaustiveSearch]]
+
+no_tears_linear_default = NotearsLearner(name="notears_linear", SLClass="linear")
 
 list_sklearn = [SklearnModel(f'{learner.__name__}', learner) for learner in
                 [LogisticRegression, BernoulliNB, KNeighborsClassifier]]
@@ -41,7 +44,7 @@ my_graph = Graph(name="Logistic Regression - Real-world", list_nodes=listNodes)
 
 ds_model = DagsimModel("pipeline1", my_graph)
 
-evaluator = Evaluator(ml_models=list_sklearn, dg_models=list_pgmpy, real_models=[ds_model],
+evaluator = Evaluator(ml_models=list_sklearn, dg_models=[*list_pgmpy, no_tears_linear_default], real_models=[ds_model],
                       scores=[balanced_accuracy_score], outcome_name="Y")
 
 pp = Postprocessing()

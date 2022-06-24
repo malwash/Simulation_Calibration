@@ -60,7 +60,7 @@ class Evaluator:
             # todo fix issue with PC
             # assert len(dg_model_real.model.nodes) == len(test_data.all.columns)
             # todo change for non pgmpy models
-            if len(dg_model.model.nodes) != len(test_data.all.columns):
+            if dg_model.num_vars != len(test_data.all.columns):
                 continue
             dg_metrics, _, _ = self._evaluate_dg_model(dg_model=dg_model, n_learning=-1, n_train=n_train, n_test=n_test,
                                                        test_data=test_data)
@@ -74,7 +74,7 @@ class Evaluator:
         scores_per_dg_model[dg_model_real.name] = dg_model_real_scores
         for dg_model in self.dg_models:
             dg_model.fit(train_data)
-            if len(dg_model.model.nodes) != len(test_data.all.columns):
+            if dg_model.num_vars != len(test_data.all.columns):
                 continue
             dg_model_scores, *_ = self._get_performance_by_repetition(dg_model, n_samples, tr_frac, n_reps,
                                                                       test_data=test_data)
